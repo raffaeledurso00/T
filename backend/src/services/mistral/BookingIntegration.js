@@ -7,7 +7,7 @@ class BookingIntegration {
         this.roomTypes = ['Standard', 'Deluxe', 'Suite', 'Villa'];
     }
 
-    // Determina se il messaggio è relativo alle prenotazioni
+    // Determine if the message is related to bookings
     isBookingRelatedQuery(message) {
         const bookingKeywords = [
             'prenotazion', 'booking', 'prenota', 'camera', 'stanza', 'soggiorno',
@@ -21,61 +21,61 @@ class BookingIntegration {
         return bookingKeywords.some(keyword => lowerMsg.includes(keyword));
     }
 
-    // Estrae l'ID di una prenotazione dal messaggio dell'utente
+    // Extract booking ID from user message
     extractBookingId(message) {
-        // Pattern per ID MongoDB (24 caratteri esadecimali)
+        // Pattern for MongoDB ID (24 hexadecimal characters)
         const idPattern = /\b([0-9a-f]{24})\b/i;
         const match = message.match(idPattern);
         return match ? match[1] : null;
     }
 
-    // Rileva l'intento dell'utente relativo alle prenotazioni
+    // Detect booking intent from message
     detectBookingIntent(message) {
         const lowerMsg = message.toLowerCase();
         
-        // Intento di visualizzazione prenotazioni
+        // Viewing bookings intent
         if (/(mostr|vedi|visualizza|list|elenco).*prenotazion/i.test(lowerMsg) ||
             /le mie prenotazion/i.test(lowerMsg)) {
             return 'list';
         }
         
-        // Intento di dettaglio prenotazione
+        // Booking details intent
         if (/(dettagli|informazioni|info).*prenotazion/i.test(lowerMsg) && 
             this.extractBookingId(message)) {
             return 'details';
         }
         
-        // Intento di cancellazione prenotazione
+        // Cancel booking intent
         if (/(cancell|annull).*prenotazion/i.test(lowerMsg) && 
             this.extractBookingId(message)) {
             return 'cancel';
         }
         
-        // Intento di modifica prenotazione
+        // Update booking intent
         if (/(modific|aggior|cambia).*prenotazion/i.test(lowerMsg) && 
             this.extractBookingId(message)) {
             return 'update';
         }
         
-        // Intento di aggiunta richiesta speciale
+        // Special request intent
         if (/(aggiung|inserir).*richiest/i.test(lowerMsg) && 
             this.extractBookingId(message)) {
             return 'specialRequest';
         }
         
-        // Intento di verifica disponibilità
+        // Check availability intent
         if (/(disponibilit|disponibile|libero|liber[ae]|prenot).*camera/i.test(lowerMsg) || 
             /(disponibilit|disponibile|libero|liber[ae]|prenot).*stanz[ae]/i.test(lowerMsg) ||
             /(camera|stanz[ae]).*disponibil/i.test(lowerMsg)) {
             return 'checkAvailability';
         }
         
-        // Intento di nuova prenotazione
+        // New booking intent
         if (/(vorrei|desidero|posso|potrei|voglio) (prenotare|riservare|fare una prenotazione)/i.test(lowerMsg)) {
             return 'createBooking';
         }
         
-        // Se è una query generica sulle prenotazioni
+        // Generic booking query
         if (this.isBookingRelatedQuery(message)) {
             return 'general';
         }
@@ -83,7 +83,7 @@ class BookingIntegration {
         return null;
     }
 
-    // Estrae le date dal messaggio
+    // Extract dates from message
     extractDates(message) {
         const dates = [];
         let match;
@@ -92,7 +92,7 @@ class BookingIntegration {
         this.dateRegex.lastIndex = 0;
         
         while ((match = this.dateRegex.exec(message)) !== null) {
-            // Formato europeo: giorno/mese/anno
+            // European format: day/month/year
             const day = parseInt(match[1], 10);
             const month = parseInt(match[2], 10) - 1; // JavaScript months are 0-based
             const year = parseInt(match[3], 10);
@@ -106,7 +106,7 @@ class BookingIntegration {
         return dates;
     }
 
-    // Estrae il tipo di camera dal messaggio
+    // Extract room type from message
     extractRoomType(message) {
         const lowerMsg = message.toLowerCase();
         
@@ -116,7 +116,7 @@ class BookingIntegration {
             }
         }
         
-        // Verifica per tipi di camera in italiano
+        // Check for room types in Italian
         if (lowerMsg.includes('standard')) return 'Standard';
         if (lowerMsg.includes('deluxe')) return 'Deluxe';
         if (lowerMsg.includes('suite')) return 'Suite';
@@ -125,7 +125,7 @@ class BookingIntegration {
         return null;
     }
 
-    // Estrae il numero di ospiti dal messaggio
+    // Extract guest count from message
     extractGuestCount(message) {
         const matches = message.match(/(\d+)\s*(ospit[ie]|person[ae])/i);
         if (matches && matches[1]) {
@@ -134,21 +134,21 @@ class BookingIntegration {
         return null;
     }
 
-    // Estrae la richiesta speciale dal messaggio
+    // Extract special request from message
     extractSpecialRequest(message) {
-        // Se il messaggio contiene "richiesta speciale" o simili, estrai il testo dopo
+        // If message contains "special request" or similar, extract text after
         const match = message.match(/(special[ei]|particolare|aggiuntiva|specific[ao]).*?[:;](.+)/i);
         if (match && match[2]) {
             return match[2].trim();
         }
         
-        // Altrimenti, prova a trovare il testo che segue la frase "aggiungi richiesta" o simili
+        // Otherwise, try to find text following "add request" or similar
         const addMatch = message.match(/(aggiung[io]|inseris[ci][io]|mett[io]).*?(richiest[ae]|not[ae]).*?[:;](.+)/i);
         if (addMatch && addMatch[3]) {
             return addMatch[3].trim();
         }
         
-        // Ultima possibilità: estrai eventuali frasi tra virgolette
+        // Last possibility: extract phrases in quotes
         const quoteMatch = message.match(/"([^"]+)"/);
         if (quoteMatch && quoteMatch[1]) {
             return quoteMatch[1].trim();
@@ -157,7 +157,7 @@ class BookingIntegration {
         return null;
     }
 
-    // Gestisce una query relativa alle prenotazioni
+    // Handle a booking-related query
     async handleBookingQuery(message, userId) {
         if (!userId) {
             return "Per gestire le prenotazioni, è necessario effettuare l'accesso con il proprio account.";
@@ -166,7 +166,7 @@ class BookingIntegration {
         const intent = this.detectBookingIntent(message);
         const bookingId = this.extractBookingId(message);
         
-        // Gestisci diverse intenzioni
+        // Handle different intents
         switch (intent) {
             case 'list':
                 try {
@@ -199,7 +199,7 @@ class BookingIntegration {
                 }
             
             case 'update':
-                // Per ora gestiamo solo aggiornamenti specifici
+                // For now we only handle specific updates
                 return "Per modificare la tua prenotazione, specifica quale aspetto vuoi cambiare (ad esempio 'aggiungi richiesta speciale')";
             
             case 'specialRequest':
@@ -229,7 +229,7 @@ class BookingIntegration {
                         return "Per quale tipo di camera desideri verificare la disponibilità? Abbiamo: Standard, Deluxe, Suite e Villa.";
                     }
                     
-                    // Ordina le date
+                    // Sort dates
                     dates.sort((a, b) => a - b);
                     const checkIn = dates[0];
                     const checkOut = dates[1];
@@ -274,7 +274,7 @@ class BookingIntegration {
                     return response;
                 }
                 
-                // Potremmo procedere con la creazione, ma per sicurezza confermiamo prima
+                // We could proceed with creation, but for safety let's confirm first
                 dates.sort((a, b) => a - b);
                 const checkInDate = dates[0].toLocaleDateString('it-IT');
                 const checkOutDate = dates[1].toLocaleDateString('it-IT');
@@ -284,7 +284,7 @@ class BookingIntegration {
                        `Posso aiutarti con qualcos'altro?`;
             
             case 'general':
-                // Risposta generica per query sulle prenotazioni
+                // Generic response for booking queries
                 return "Posso aiutarti con le tue prenotazioni. Puoi chiedermi di:\n\n" +
                        "- Mostrare le tue prenotazioni esistenti\n" +
                        "- Verificare la disponibilità di una camera\n" +
@@ -294,7 +294,7 @@ class BookingIntegration {
                        "Cosa desideri fare?";
             
             default:
-                return null; // Questo messaggio non è relativo alle prenotazioni
+                return null; // This message is not related to bookings
         }
     }
 }
