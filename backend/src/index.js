@@ -4,6 +4,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
 const cors = require('cors');
+const fs = require('fs');
 const { connectMongoDB, connectRedis, isMongoFallbackMode } = require('./config/database');
 const routes = require('./routes');
 const { limiter, validateInput, errorHandler } = require('./middleware/security');
@@ -17,12 +18,30 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Handle OPTIONS requests explicitly for CORS preflight
-app.options('*', cors());
+// Configurazione sicura di Helmet
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'"]
+    }
+  },
+  crossOriginResourcePolicy: false // Necessario per risolvere CORB
+}));
 
-// CORS configuration - very permissive for development
+// Configurazione CORS sicura
+const whitelist = ['https://villapetriolo.it', 'http://localhost:3000', 'http://localhost:5173'];
 app.use(cors({
-  origin: true, // Allow all origins
+  origin: function(origin, callback) {
+    if (whitelist.includes(origin) || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Non permesso da CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'X-Session-ID', 'Accept', 'Origin'],
   exposedHeaders: ['Content-Type', 'X-Session-ID'],
@@ -36,14 +55,6 @@ app.use(express.urlencoded({ extended: true }));
 // Add request logging middleware
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    next();
-});
-
-// Add response headers for CORS and security
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-Session-ID");
-    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     next();
 });
 
@@ -98,10 +109,50 @@ app.get('/', (req, res) => {
 });
 
 // Special routes for GSAP and its plugins with proper MIME types
-app.use('/gsap', express.static(path.join(__dirname, '../node_modules/gsap')));
+app.use('/gsap', express.static(path.join(__dirname, '../node_modules/gsap'), {
+    setHeaders: (res, filePath) => {
+      // Set appropriate MIME types
+      if (filePath.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      } else if (filePath.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css');
+      }
+      
+      // Add security headers
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      // Allow cross-origin requests for this specific resource
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      // Ensure cache control is set
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    }
+}));
+  
+// Specifica gestione per DrawSVGPlugin che ha problemi CORB
 app.get('/gsap/DrawSVGPlugin.min.js', (req, res) => {
-    res.setHeader('Content-Type', 'application/javascript');
-    res.sendFile(path.join(__dirname, '../node_modules/gsap/DrawSVGPlugin.min.js'));
+  // Imposta l'origine consentita in base all'header Origin della richiesta
+  const origin = req.headers.origin;
+  if (origin && whitelist.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
+  // Imposta ulteriori header di controllo CORS
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  // Set proper content type header for JavaScript
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  
+  // Disabilita la cache per diagnosi
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  
+  // Add security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  
+  // Send file
+  res.sendFile(path.join(__dirname, '../node_modules/gsap/DrawSVGPlugin.min.js'));
 });
 
 // Error handling middleware
@@ -119,6 +170,17 @@ app.use((err, req, res, next) => {
 // Initialize and start the application
 const startServer = async () => {
     try {
+        // Copia DrawSVGPlugin.min.js nella cartella public per un accesso alternativo
+        try {
+            const pluginSource = path.join(__dirname, '../node_modules/gsap/DrawSVGPlugin.min.js');
+            const pluginDest = path.join(__dirname, '../public/DrawSVGPlugin.min.js');
+            
+            fs.copyFileSync(pluginSource, pluginDest);
+            console.log('DrawSVGPlugin.min.js copiato nella cartella public');
+        } catch (err) {
+            console.error('Errore nella copia di DrawSVGPlugin.min.js:', err);
+        }
+        
         // Connect to databases with fallbacks - don't throw if they fail
         let mongoConnected = false;
         let redisConnected = false;
@@ -152,7 +214,13 @@ const startServer = async () => {
         try {
             const emergencyApp = express();
             emergencyApp.use(express.json());
-            emergencyApp.use(cors());
+            
+            // Usa CORS sicuro anche per il server di emergenza
+            emergencyApp.use(cors({
+              origin: whitelist,
+              methods: ['GET', 'POST'],
+              credentials: true
+            }));
             
             // Basic routes for emergency server
             emergencyApp.get('/', (req, res) => res.json({ status: 'emergency' }));
