@@ -229,4 +229,4 @@ async function initializeDatabase() {
     }
 }
 
-initializeDatabase();
+initializeDatabase(); 
