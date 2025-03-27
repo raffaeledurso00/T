@@ -1,5 +1,5 @@
 // backend/src/services/bookingService.js
-const Booking = require('../models/Booking');
+const Booking = require('../../models/Booking');
 const { isMongoFallbackMode } = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
 
