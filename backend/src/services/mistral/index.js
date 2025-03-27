@@ -1,5 +1,5 @@
 // src/services/mistral/index.js
 const MistralService = require('./MistralService');
 
-// Esporta un'istanza singleton del servizio
+// Export a singleton instance of the service
 module.exports = new MistralService();

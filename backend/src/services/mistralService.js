@@ -1,8 +1,8 @@
 // backend/src/services/mistralService.js
-// Questo file è mantenuto per retrocompatibilità con i file esistenti
-// Reindirizza semplicemente all'implementazione modulare
+// This file is maintained for backward compatibility with existing files
+// It simply redirects to the modular implementation
 
 const mistralService = require('./mistral');
 
-// Esporta l'istanza del servizio modulare
+// Export the service instance from the modular implementation
 module.exports = mistralService;
