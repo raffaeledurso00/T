@@ -1,0 +1,88 @@
+/* base/typography.css */
+.chat-header h1 {
+    font-family: Gilda Display;
+    font-weight: 400;
+    letter-spacing: 0px;
+    line-height: 1.31;
+    text-transform: none;
+    color: #ffffff;
+    text-align: center;
+    margin: 0 auto;
+    width: fit-content;
+}
+
+.welcome-message h2 {
+    color: #e0e0e0;
+    margin-bottom: 15px;
+    font-weight: 400;
+}
+
+.welcome-message p {
+    color: #aaa;
+    margin-bottom: 20px;
+}
+
+.message-content {
+    line-height: 1.6;
+    color: #e0e0e0;
+}
+
+.user-message .message-content {
+    color: white;
+}
+
+.chat-item-title {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-item-date {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-top: 4px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #e0e0e0;
+    font-weight: 500;
+}
+
+.disclaimer {
+    margin-top: 8px;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #777;
+}
+
+.section-title {
+    font-weight: bold;
+    color: #9f887c;
+    margin-bottom: 8px;
+    font-size: 1.05em;
+}
+
+.empty-chats {
+    padding: 15px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+}
+
+.context-indicator {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: #777;
+    height: 20px;
+}
+
+#current-topic {
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    background-color: transparent;
+    transition: all 0.3s ease;
+}

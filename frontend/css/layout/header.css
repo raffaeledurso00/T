@@ -1,0 +1,91 @@
+/* layout/header.css */
+.chat-header {
+    padding: 15px 20px;
+    background-color: #1a1a1a;
+    border-bottom: 1px solid #333;
+    display: flex;
+    align-items: center;
+    position: relative;
+    min-height: 60px; /* Fissare un'altezza minima per garantire spazio sufficiente */
+}
+
+.mobile-menu {
+    display: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #aaa;
+    margin-right: 15px;
+}
+
+.chat-header-logo {
+    margin: 0 auto; /* Centra il logo */
+}
+
+/* Stile per il pulsante di toggle nell'header */
+.sidebar-toggle-btn {
+    position: absolute;
+    left: 20px;
+    top: 50%; /* Posiziona a metà dell'altezza dell'header */
+    transform: translateY(-50%); /* Centra verticalmente usando transform */
+    width: 32px;
+    height: 32px;
+    background-color: rgb(159, 136, 124);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    transition: background-color 0.2s ease, transform 0.3s ease, left 0.3s ease;
+}
+
+.sidebar-toggle-btn:hover {
+    background-color: rgb(139, 116, 104);
+}
+
+/* Rotazione e movimento dell'icona quando la sidebar è nascosta */
+.sidebar-hidden .sidebar-toggle-btn {
+    transform: translateY(-50%) rotate(180deg); /* Rotazione di 180 gradi invece di 90 */
+    left: 20px; /* Rimane nella stessa posizione ma ruota */
+}
+
+/* Animazione quando la sidebar è visibile - si sposta leggermente a destra */
+.sidebar-toggle-btn {
+    animation: rollButton 0.3s ease forwards;
+}
+
+@keyframes rollButton {
+    from {
+        transform: translateY(-50%) rotate(180deg); /* Rotazione di 180 gradi */
+    }
+    to {
+        transform: translateY(-50%) rotate(0deg);
+    }
+}
+
+/* Animazione quando la sidebar è nascosta - rotola verso sinistra */
+.sidebar-hidden .sidebar-toggle-btn {
+    animation: rollButtonBack 0.3s ease forwards;
+}
+
+@keyframes rollButtonBack {
+    from {
+        transform: translateY(-50%) rotate(0deg);
+    }
+    to {
+        transform: translateY(-50%) rotate(180deg); /* Rotazione di 180 gradi */
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar-toggle-btn {
+        display: none !important;
+    }
+    
+    .mobile-menu {
+        display: block;
+    }
+}

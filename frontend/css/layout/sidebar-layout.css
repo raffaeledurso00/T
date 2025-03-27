@@ -1,0 +1,72 @@
+/* layout/sidebar-layout.css - versione aggiornata */
+
+/* NUOVO COMPORTAMENTO PER SIDEBAR COMPLETAMENTE NASCOSTA */
+.sidebar-hidden .chat-sidebar {
+    width: 0;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+    border: none;
+    transition: width 0.3s ease;
+}
+
+/* Quando la sidebar è nascosta, espandi la chat principale */
+.sidebar-hidden .chat-main {
+    margin-left: 0;
+}
+
+/* Animazione fluida della transizione sidebar */
+.chat-container {
+    transition: all 0.3s ease;
+}
+
+.chat-sidebar {
+    width: 260px;
+    background-color: rgb(159, 136, 124);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s ease;
+    z-index: 10;
+    position: relative;
+}
+
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #121212;
+    transition: margin-left 0.3s ease;
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-open .sidebar-overlay {
+    display: block;
+    opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .chat-sidebar {
+        position: fixed;
+        left: -260px;
+        height: 100%;
+        transition: left 0.3s ease;
+    }
+    
+    .sidebar-open .chat-sidebar {
+        left: 0;
+    }
+}

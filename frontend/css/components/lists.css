@@ -1,0 +1,259 @@
+/* components/lists.css - Versione ottimizzata */
+
+/* Sezioni formattate */
+.formatted-section {
+    margin: 18px 0;
+    border-left: 4px solid #9f887c;
+    padding: 12px 0 12px 15px;
+    background-color: rgba(159, 136, 124, 0.05);
+    border-radius: 0 8px 8px 0;
+    transition: all 0.3s ease;
+}
+
+.formatted-section:hover {
+    background-color: rgba(159, 136, 124, 0.1);
+    border-left-width: 6px;
+}
+
+/* Stili specifici per diversi tipi di sezioni */
+.menu-section {
+    border-left-color: #e67e22;
+}
+
+.attivita-section {
+    border-left-color: #2ecc71;
+}
+
+.eventi-section {
+    border-left-color: #3498db;
+}
+
+/* Titoli delle sezioni */
+.section-title {
+    font-weight: bold;
+    color: #9f887c;
+    margin-bottom: 12px;
+    font-size: 1.05em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(159, 136, 124, 0.2);
+}
+
+.menu-section .section-title {
+    color: #e67e22;
+    border-bottom-color: rgba(230, 126, 34, 0.2);
+}
+
+.attivita-section .section-title {
+    color: #2ecc71;
+    border-bottom-color: rgba(46, 204, 113, 0.2);
+}
+
+.eventi-section .section-title {
+    color: #3498db;
+    border-bottom-color: rgba(52, 152, 219, 0.2);
+}
+
+/* Lista formattata */
+.formatted-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Elementi della lista */
+.list-item {
+    padding: 14px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    animation: listItemFadeIn 0.3s ease-out forwards;
+    opacity: 0;
+}
+
+.list-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Header dell'elemento */
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+/* Nome dell'elemento */
+.item-name {
+    font-weight: 600;
+    color: #e0e0e0;
+    font-size: 1.1em;
+    flex: 1;
+    padding-right: 10px;
+}
+
+/* Dettagli dell'elemento */
+.item-details {
+    font-size: 0.9em;
+    color: #aaa;
+    width: 100%;
+    margin-top: 8px;
+    line-height: 1.5;
+}
+
+/* Prezzo */
+.item-price {
+    font-weight: bold;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background-color: rgba(159, 136, 124, 0.8);
+    min-width: 60px;
+    text-align: center;
+    font-size: 0.95em;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* Data o informazioni temporali */
+.item-date {
+    font-size: 0.85em;
+    font-style: italic;
+    color: #999;
+    width: 100%;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+/* Stili specifici per i diversi tipi di elementi */
+.menu-item .item-price {
+    background-color: rgba(230, 126, 34, 0.8);
+}
+
+.attivita-item .item-price {
+    background-color: rgba(46, 204, 113, 0.8);
+}
+
+.eventi-item .item-price {
+    background-color: rgba(52, 152, 219, 0.8);
+}
+
+.generic-item {
+    padding: 10px;
+}
+
+/* Stile per il testo conclusivo */
+.conclusion-text {
+    margin-top: 16px;
+    line-height: 1.5;
+    color: #e0e0e0;
+    font-size: 1em;
+    padding: 10px;
+    border-top: 1px solid rgba(159, 136, 124, 0.2);
+}
+
+/* Stile per liste generiche (non in sezioni speciali) */
+.generic-list {
+    margin: 12px 0;
+    padding-left: 10px;
+}
+
+.generic-list .list-item {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Stile per liste HTML normali */
+ul:not(.formatted-list) {
+    list-style-type: disc;
+    padding-left: 30px;
+    margin: 10px 0;
+}
+
+ul:not(.formatted-list) li {
+    margin-bottom: 6px;
+    padding-left: 5px;
+}
+
+/* Supporto per tema scuro e chiaro */
+[data-theme="dark"] .item-price {
+    background-color: rgba(66, 66, 66, 0.9);
+}
+
+[data-theme="light"] .item-name {
+    color: #333;
+}
+
+[data-theme="light"] .item-details {
+    color: #666;
+}
+
+[data-theme="light"] .item-price {
+    color: #fff;
+}
+
+[data-theme="light"] .conclusion-text {
+    color: #333;
+}
+
+/* Miglioramenti per lista con immagini o icone */
+.list-item-with-icon {
+    display: flex;
+    align-items: center;
+}
+
+.list-item-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .list-item {
+        padding: 10px;
+    }
+    
+    .item-price {
+        padding: 4px 8px;
+        font-size: 0.9em;
+    }
+    
+    .section-title {
+        font-size: 1em;
+    }
+}
+
+/* Animazioni per elementi della lista */
+@keyframes listItemPulse {
+    0% {
+        box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+    }
+    50% {
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+    100% {
+        box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+    }
+}
+
+.list-item:hover {
+    animation: listItemPulse 2s infinite;
+}

@@ -1,0 +1,87 @@
+/* preloader/preloader.css */
+.preloader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.preloader__content {
+    position: relative;
+    width: 200px;
+    height: 200px;
+}
+
+.preloader__circle {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.preloader__circle svg {
+    width: 100%;
+    height: 100%;
+    transform-origin: center center;
+    animation: rotate 2s linear infinite;
+}
+
+#loading-circle {
+    stroke-dasharray: 565.48;
+    stroke-dashoffset: 465.48;
+    stroke: #ffffff;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 3px rgba(159, 136, 124, 0.7));
+}
+
+.preloader__circle {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.preloader__background-circle {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.preloader__progress-circle {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: center center;
+    animation: rotate 2s linear infinite;
+}
+
+.preloader__logo-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.preloader__logo {
+    width: 100%;
+    height: auto;
+}
+
+.preloader__logo.transitioning {
+    position: fixed;
+    z-index: 10000;
+    transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}

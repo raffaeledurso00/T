@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Villa Petriolo - Concierge Digitale</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Aggiungiamo una dichiarazione meta per migliorare l'esperienza mobile -->
+    <meta name="theme-color" content="#9f887c">
+</head>
+<body>
+    <!-- Preloader -->
+    <div id="js-preloader" class="preloader">
+        <div class="preloader__content">
+            <div class="preloader__circle">
+                <!-- Cerchio esterno statico (sfondo) -->
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="preloader__background-circle">
+                    <circle cx="100" cy="100" r="90" stroke="rgba(159, 136, 124, 0.3)" stroke-width="2" fill="none" />
+                </svg>
+                <!-- Cerchio esterno animato (progresso) -->
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="preloader__progress-circle">
+                    <circle id="loading-circle" cx="100" cy="100" r="90" stroke="#9f887c" stroke-width="2" fill="none" />
+                </svg>
+                <!-- Logo centrale -->
+                <div class="preloader__logo-container">
+                    <img src="img/logo.png" alt="Villa Petriolo" class="preloader__logo" id="preloader-logo">
+                </div>
+            </div>
+        </div>
+    </div>
+  
+    <!-- Tenda di transizione -->
+    <div id="js-page-transition-curtain" class="curtain">
+        <svg class="curtain-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path class="curtain__rect" d="M0,0 L100,0 L100,100 L0,100 L0,0 Z" />
+        </svg>
+    </div>
+  
+    <!-- Cursor follower -->
+    <div id="js-cursor" class="cursor">
+        <div class="cursor__follower">
+            <svg viewBox="0 0 152 152" version="1.1" xmlns="http://www.w3.org/2000/svg">
+                <circle id="inner" cx="76" cy="76" r="6" fill="#9f887c" />
+                <circle id="outer" cx="76" cy="76" r="12" stroke="#9f887c" fill="none" stroke-width="2" />
+            </svg>
+        </div>
+    </div>
+
+    <!-- Aggiungiamo un overlay per la sidebar mobile -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <!-- Contenitore principale -->
+    <div class="chat-container">
+        <div class="chat-sidebar">
+            <div class="sidebar-header">
+                <img src="img/logo.png" alt="Villa Petriolo" class="logo">
+            </div>
+            <div class="new-chat">
+                <button id="new-chat-btn">
+                    <i class="fas fa-plus"></i> Nuova chat
+                </button>
+            </div>
+            <div class="sidebar-chats" id="sidebar-chats">
+                <!-- Le chat precedenti verranno mostrate qui -->
+            </div>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Ospite</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-main">
+            <div class="chat-header">
+                <!-- Pulsante toggle spostato a sinistra prima dell'hamburger menu mobile -->
+                <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" title="Nascondi sidebar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                        <rect x="1" y="1" width="22" height="22" rx="4" ry="4" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <line x1="8" y1="1" x2="8" y2="23" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                </button>
+                <div class="mobile-menu">
+                    <i class="fas fa-bars" id="sidebar-toggle"></i>
+                </div>
+                <img src="img/logo.png" alt="Villa Petriolo" class="chat-header-logo">
+            </div>
+            
+            <div class="messages-container" id="messages-container">
+                <!-- I messaggi appariranno qui -->
+                <!-- Messaggio di benvenuto che viene mostrato all'inizio -->
+                <div class="welcome-message" id="welcome-message">
+                    <h2>Benvenuto al Concierge Digitale di Villa Petriolo</h2>
+                    <p>Sono qui per aiutarti con:</p>
+                    <div class="suggestion-chips">
+                        <button class="suggestion-chip" data-message="Quali sono gli orari del ristorante?">
+                            <i class="fas fa-utensils"></i> Ristorante
+                        </button>
+                        <button class="suggestion-chip" data-message="Che attività posso fare oggi?">
+                            <i class="fas fa-hiking"></i> Attività
+                        </button>
+                        <button class="suggestion-chip" data-message="Quali eventi sono in programma?">
+                            <i class="fas fa-calendar-alt"></i> Eventi
+                        </button>
+                        <button class="suggestion-chip" data-message="Come posso prenotare un servizio?">
+                            <i class="fas fa-concierge-bell"></i> Servizi
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <form id="chat-form">
+                    <div class="input-wrapper">
+                        <input type="text" id="message-input" placeholder="Scrivi un messaggio..." autocomplete="off">
+                        <button type="submit" id="send-button">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <!-- Indicatore di contesto che mostra l'argomento corrente -->
+                    <div class="context-indicator" id="context-indicator">
+                        <span id="current-topic"></span>
+                    </div>
+                    <div class="disclaimer">
+                        <p>Villa Petriolo Concierge: per aiutarti con il tuo soggiorno.</p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal di conferma personalizzato -->
+    <div id="custom-modal" class="custom-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Conferma</h3>
+            </div>
+            <div class="modal-body">
+                <p id="modal-message">Sei sicuro di voler eliminare questa chat?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-cancel-btn" class="modal-btn cancel-btn">Annulla</button>
+                <button id="modal-confirm-btn" class="modal-btn confirm-btn">Conferma</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carica GSAP da CDN prima degli altri script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/DrawSVGPlugin.min.js"></script>
+    
+    <!-- Utilizza il nuovo file main.js che carica tutti gli altri moduli -->
+    <script src="js/main.js"></script>
+    <!-- Modifica da fare in frontend/index.html prima della chiusura del body -->
+
+<script src="js/components/mobile-sidebar.js"></script>
+    <!-- Modifica da aggiungere in index.html prima della chiusura del body -->
+<script>
+    // Preloader initialization
+    document.addEventListener('DOMContentLoaded', function() {
+        // Verifica se GSAP è disponibile
+        if (typeof gsap !== 'undefined') {
+            const preloader = document.getElementById('js-preloader');
+            const loadingCircle = document.getElementById('loading-circle');
+            const preloaderLogo = document.getElementById('preloader-logo');
+            const chatContainer = document.querySelector('.chat-container');
+            
+            if (preloader && loadingCircle && preloaderLogo && chatContainer) {
+                chatContainer.style.opacity = '0';
+                
+                // Animazione del cerchio
+                gsap.fromTo(loadingCircle, 
+                    { strokeDashoffset: 565.48 }, 
+                    { 
+                        strokeDashoffset: 0, 
+                        duration: 2.5, 
+                        ease: "power2.inOut",
+                        onComplete: finishLoading
+                    }
+                );
+                
+                // Animazione del logo
+                gsap.to(preloaderLogo, {
+                    scale: 1.05,
+                    duration: 1,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: "sine.inOut"
+                });
+                
+                // Timeout di sicurezza
+                setTimeout(() => {
+                    if (preloader.style.display !== 'none') {
+                        finishLoading();
+                    }
+                }, 5000);
+                
+                function finishLoading() {
+                    gsap.killTweensOf(preloaderLogo);
+                    
+                    gsap.to(preloader, {
+                        autoAlpha: 0,
+                        duration: 0.8,
+                        onComplete: () => {
+                            preloader.style.display = 'none';
+                            
+                            gsap.to(chatContainer, {
+                                opacity: 1,
+                                duration: 0.6,
+                                onComplete: () => {
+                                    const event = new Event('appReady');
+                                    document.dispatchEvent(event);
+                                }
+                            });
+                        }
+                    });
+                }
+            } else {
+                // Fallback se gli elementi non sono trovati
+                if (preloader) preloader.style.display = 'none';
+                if (chatContainer) chatContainer.style.opacity = '1';
+                
+                setTimeout(() => {
+                    const event = new Event('appReady');
+                    document.dispatchEvent(event);
+                }, 500);
+            }
+        } else {
+            // Fallback se GSAP non è disponibile
+            const preloader = document.getElementById('js-preloader');
+            const chatContainer = document.querySelector('.chat-container');
+            
+            if (preloader) preloader.style.display = 'none';
+            if (chatContainer) chatContainer.style.opacity = '1';
+            
+            setTimeout(() => {
+                const event = new Event('appReady');
+                document.dispatchEvent(event);
+            }, 500);
+        }
+    });
+    </script>
+    <script>
+        // Fix specifico per il form di chat
+        document.addEventListener('DOMContentLoaded', function() {
+          const fixChatForm = function() {
+            const form = document.getElementById('chat-form');
+            if (!form) return;
+            
+            form.addEventListener('submit', function(e) {
+              console.log('Emergency submit prevention');
+              e.preventDefault();
+              e.stopPropagation();
+              
+              const input = document.getElementById('message-input');
+              if (input && input.value.trim() !== '') {
+                if (window.ChatCore && typeof window.ChatCore.handleMessageSubmit === 'function') {
+                  window.ChatCore.handleMessageSubmit(input.value.trim());
+                }
+              }
+              
+              return false;
+            }, true);
+          };
+          
+          // Esegui immediatamente e anche dopo il caricamento dell'app
+          fixChatForm();
+          document.addEventListener('appReady', fixChatForm);
+        });
+      </script>
+</body>
+</html>

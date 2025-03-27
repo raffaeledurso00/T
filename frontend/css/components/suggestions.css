@@ -1,0 +1,73 @@
+/* components/suggestions.css */
+.welcome-message {
+    text-align: center;
+    padding: 30px 20px;
+    background-color: rgba(159, 136, 124, 0.1);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    max-width: 80%;
+    align-self: center;
+}
+
+.suggestion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.suggestion-chip {
+    padding: 10px 16px;
+    background-color: rgb(159, 136, 124);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.suggestion-chip:hover {
+    background-color: rgb(139, 116, 104);
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.suggestion-chip i {
+    font-size: 0.9rem;
+}
+
+.quick-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 15px;
+    width: 100%;
+}
+
+.quick-suggestion {
+    background-color: rgba(159, 136, 124, 0.2);
+    color: #e0e0e0;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid rgba(159, 136, 124, 0.3);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.quick-suggestion:hover {
+    background-color: rgba(159, 136, 124, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}

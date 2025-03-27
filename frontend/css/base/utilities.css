@@ -1,0 +1,43 @@
+/* base/utilities.css */
+#current-topic.menu {
+    background-color: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+}
+
+#current-topic.attivita {
+    background-color: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+}
+
+#current-topic.servizi {
+    background-color: rgba(155, 89, 182, 0.2);
+    color: #9b59b6;
+}
+
+#current-topic.eventi {
+    background-color: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+}
+
+.message-row {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.list-item {
+    animation: listItemFadeIn 0.3s ease-out forwards;
+    animation-delay: calc(var(--item-index, 0) * 0.05s);
+    opacity: 0;
+}
+
+body.cursor-progress {
+    cursor: progress;
+}
+
+.page-wrapper__content {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.page-wrapper__content.loaded {
+    opacity: 1;
+}
