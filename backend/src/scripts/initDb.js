@@ -217,9 +217,13 @@ async function initializeDatabase() {
         await Event.insertMany(initialEvents);
         console.log('Events initialized');
 
-        // Pulisci le prenotazioni esistenti
-        await Booking.deleteMany({});
-        console.log('Existing bookings cleared');
+        // Verifica se esistono già prenotazioni
+        const bookingsCount = await Booking.countDocuments();
+        if (bookingsCount === 0) {
+            console.log('No existing bookings found, you can use populateBookings.js to create sample bookings');
+        } else {
+            console.log(`${bookingsCount} existing bookings preserved`);
+        }
 
         console.log('Database initialization completed successfully');
         process.exit(0);
@@ -229,4 +233,4 @@ async function initializeDatabase() {
     }
 }
 
-initializeDatabase(); 
+initializeDatabase();

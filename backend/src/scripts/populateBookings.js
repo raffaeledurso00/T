@@ -1,7 +1,6 @@
 // backend/src/scripts/populateBookings.js
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
 // Importa il modello Booking
@@ -135,9 +134,8 @@ function generateRandomBooking(userId = null) {
     // Select a special request (or none)
     const specialRequest = Math.random() < 0.6 ? specialRequests[randomInt(0, specialRequests.length - 1)] : "";
     
-    // Create the booking object
+    // Create the booking object - NOTE: don't set the _id field, let MongoDB generate it
     return {
-        _id: uuidv4(),
         guestName,
         userId: userIdentifier,
         checkIn,
