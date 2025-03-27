@@ -23,6 +23,11 @@ class MessageDetectionUtils {
         
         const lowerMessage = message.toLowerCase().trim();
         
+        // Se è una richiesta di prenotazione tavolo, non richiedere formattazione di menu
+        if (this.isTableReservationRequest(lowerMessage)) {
+            return false;
+        }
+        
         // Messaggi brevi che non contengono richieste specifiche non richiedono formattazione
         if (lowerMessage.length < 15 && !this.containsSpecificQuery(lowerMessage)) {
             return false;
@@ -34,6 +39,17 @@ class MessageDetectionUtils {
                this.isAboutEvents(lowerMessage);
     }
     
+    // Verifica se il messaggio è una richiesta di prenotazione tavolo
+    isTableReservationRequest(message) {
+        const reservationKeywords = [
+            'prenotare un tavolo', 'prenotare tavolo', 'prenotazione tavolo', 
+            'riservare un tavolo', 'riservare tavolo', 'vorrei prenotare', 
+            'posso prenotare', 'prenotare per stasera', 'prenotare per oggi',
+            'prenotare per domani', 'tavolo per'
+        ];
+        return reservationKeywords.some(keyword => message.includes(keyword));
+    }
+    
     // Verifica se il messaggio contiene una richiesta specifica (non solo un saluto)
     containsSpecificQuery(message) {
         const queryWords = ['cosa', 'quali', 'come', 'dove', 'quando', 'perché', 'chi', 'vorrei', 'posso', 'mi', 'informazioni'];
@@ -43,6 +59,10 @@ class MessageDetectionUtils {
     // Verifica se il messaggio è relativo al menu/ristorante
     isAboutMenu(message) {
         const menuKeywords = ['menu', 'ristorante', 'mangiare', 'cena', 'pranzo', 'colazione', 'piatti', 'cucina'];
+        // Escludiamo richieste di prenotazione tavolo
+        if (this.isTableReservationRequest(message)) {
+            return false;
+        }
         return menuKeywords.some(keyword => message.includes(keyword));
     }
     
