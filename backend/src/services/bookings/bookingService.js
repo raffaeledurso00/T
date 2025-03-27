@@ -1,16 +1,11 @@
 // backend/src/services/bookings/bookingService.js
 const Booking = require('../../models/Booking');
-const mongoose = require('mongoose');
+const { isMongoFallbackMode } = require('../../config/database');
 const { v4: uuidv4 } = require('uuid');
-
-// Determine if we're in fallback mode based on MongoDB connection state
-const isMongoFallbackMode = () => {
-    return mongoose.connection.readyState !== 1; // 1 = connected
-};
 
 class BookingService {
     constructor() {
-        // Initialize memory for fallback if MongoDB isn't available
+        // Inizializza memoria per fallback se MongoDB non è disponibile
         this.inMemoryBookings = [];
     }
 
@@ -21,11 +16,11 @@ class BookingService {
             }
             
             let bookings;
-            if (isMongoFallbackMode()) {
-                // If we're in fallback mode, use local memory
+            if (isMongoFallbackMode) {
+                // Se siamo in modalità fallback, usiamo la memoria locale
                 bookings = this.inMemoryBookings.filter(booking => booking.userId === userId);
             } else {
-                // Otherwise, standard MongoDB query
+                // Altrimenti, query standard MongoDB
                 bookings = await Booking.find({ userId: userId }).sort({ checkIn: 1 });
             }
             
@@ -43,13 +38,13 @@ class BookingService {
             }
             
             let booking;
-            if (isMongoFallbackMode()) {
-                // If we're in fallback mode, search in memory
+            if (isMongoFallbackMode) {
+                // Se siamo in modalità fallback, cerchiamo in memoria
                 booking = this.inMemoryBookings.find(b => 
                     b._id.toString() === bookingId && 
                     (!userId || b.userId === userId));
             } else {
-                // If userId is provided, verify the booking belongs to the user
+                // Se userId è fornito, verifica che la prenotazione appartenga all'utente
                 const query = { _id: bookingId };
                 if (userId) {
                     query.userId = userId;
@@ -78,24 +73,24 @@ class BookingService {
                 throw new Error('Room type is required');
             }
 
-            // Generate an ID if not provided
+            // Genera un ID se non fornito
             if (!bookingData._id) {
                 bookingData._id = uuidv4();
             }
 
-            // Set status and timestamp
+            // Imposta stato e timestamp
             bookingData.status = bookingData.status || 'Pending';
             bookingData.paymentStatus = bookingData.paymentStatus || 'Pending';
             bookingData.createdAt = new Date();
             bookingData.updatedAt = new Date();
 
             let newBooking;
-            if (isMongoFallbackMode()) {
-                // Save to memory
+            if (isMongoFallbackMode) {
+                // Salva in memoria
                 this.inMemoryBookings.push(bookingData);
                 newBooking = bookingData;
             } else {
-                // Save to database
+                // Salva nel database
                 newBooking = await Booking.create(bookingData);
             }
 
@@ -108,15 +103,15 @@ class BookingService {
 
     async updateBookingStatus(bookingId, userId, newStatus) {
         try {
-            // Verify status is valid
+            // Verifica che lo stato sia valido
             const validStatuses = ['Pending', 'Confirmed', 'Cancelled', 'Completed'];
             if (!validStatuses.includes(newStatus)) {
                 throw new Error(`Invalid status: ${newStatus}. Must be one of: ${validStatuses.join(', ')}`);
             }
             
             let booking;
-            if (isMongoFallbackMode()) {
-                // Update in memory
+            if (isMongoFallbackMode) {
+                // Aggiorna in memoria
                 const bookingIndex = this.inMemoryBookings.findIndex(b => 
                     b._id.toString() === bookingId && b.userId === userId);
                 
@@ -128,14 +123,14 @@ class BookingService {
                 this.inMemoryBookings[bookingIndex].updatedAt = new Date();
                 booking = this.inMemoryBookings[bookingIndex];
             } else {
-                // Update in database
+                // Aggiorna nel database
                 booking = await Booking.findOneAndUpdate(
                     { _id: bookingId, userId: userId },
                     { 
                         status: newStatus,
                         updatedAt: new Date()
                     },
-                    { new: true } // Return updated document
+                    { new: true } // Restituisce il documento aggiornato
                 );
                 
                 if (!booking) {
@@ -153,8 +148,8 @@ class BookingService {
     async updateSpecialRequests(bookingId, userId, specialRequests) {
         try {
             let booking;
-            if (isMongoFallbackMode()) {
-                // Update in memory
+            if (isMongoFallbackMode) {
+                // Aggiorna in memoria
                 const bookingIndex = this.inMemoryBookings.findIndex(b => 
                     b._id.toString() === bookingId && b.userId === userId);
                 
@@ -166,7 +161,7 @@ class BookingService {
                 this.inMemoryBookings[bookingIndex].updatedAt = new Date();
                 booking = this.inMemoryBookings[bookingIndex];
             } else {
-                // Update in database
+                // Aggiorna nel database
                 booking = await Booking.findOneAndUpdate(
                     { _id: bookingId, userId: userId },
                     { 
@@ -188,25 +183,25 @@ class BookingService {
         }
     }
 
-    // Check availability for a period
+    // Verifica disponibilità per un periodo
     async checkAvailability(checkIn, checkOut, roomType) {
         try {
             const checkInDate = new Date(checkIn);
             const checkOutDate = new Date(checkOut);
 
-            // Verify dates are valid
+            // Verifica che le date siano valide
             if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
                 throw new Error('Invalid date format');
             }
 
-            // Verify check-out is after check-in
+            // Verifica che check-out sia dopo check-in
             if (checkOutDate <= checkInDate) {
                 throw new Error('Check-out date must be after check-in date');
             }
 
             let bookings;
-            if (isMongoFallbackMode()) {
-                // Search for bookings in memory that overlap with the period
+            if (isMongoFallbackMode) {
+                // Cerca prenotazioni in memoria che si sovrappongono al periodo
                 bookings = this.inMemoryBookings.filter(b => 
                     b.roomType === roomType &&
                     b.status !== 'Cancelled' &&
@@ -214,7 +209,7 @@ class BookingService {
                     new Date(b.checkOut) > checkInDate
                 );
             } else {
-                // Search in database
+                // Cerca nel database
                 bookings = await Booking.find({
                     roomType: roomType,
                     status: { $ne: 'Cancelled' },
@@ -223,7 +218,7 @@ class BookingService {
                 });
             }
 
-            // If there are no overlapping bookings, the room is available
+            // Se non ci sono prenotazioni sovrapposte, la camera è disponibile
             return {
                 available: bookings.length === 0,
                 conflictingBookings: bookings
@@ -234,7 +229,7 @@ class BookingService {
         }
     }
 
-    // Format a booking into readable text
+    // Formatta una prenotazione in un testo leggibile
     formatBooking(booking) {
         if (!booking) return 'Prenotazione non trovata';
         
@@ -272,7 +267,7 @@ Stato pagamento: ${paymentStatusItalian}
         `.trim();
     }
 
-    // Format a list of bookings into readable text
+    // Formatta un elenco di prenotazioni in un testo leggibile
     formatBookingsList(bookings) {
         if (!bookings || bookings.length === 0) {
             return 'Non hai prenotazioni attive.';

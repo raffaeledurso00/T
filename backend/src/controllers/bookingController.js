@@ -1,5 +1,5 @@
 // backend/src/controllers/bookingController.js
-const bookingService = require('../services/bookingService');
+const bookingService = require('../services/bookings/bookingService');
 const { v4: uuidv4 } = require('uuid');
 
 class BookingController {
