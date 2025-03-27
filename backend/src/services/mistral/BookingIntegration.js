@@ -1,5 +1,5 @@
 // src/services/mistral/BookingIntegration.js
-const bookingService = require('../bookingService');
+const bookingService = require('../bookings/bookingService');
 
 class BookingIntegration {
     constructor() {
