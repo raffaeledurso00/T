@@ -8,6 +8,8 @@ const BookingIntegration = require('./BookingIntegration');
 // Set DEBUG to true for detailed logging
 const DEBUG = false;
 
+// Modifiche da applicare a backend/src/services/mistral/MistralService.js
+
 class MistralService {
     constructor() {
         this.apiClient = new MistralApiClient();
@@ -20,6 +22,35 @@ class MistralService {
     async processMessage(message, sessionId, userId = null) {
         try {
             if (DEBUG) console.log(`Processing message for session ${sessionId}: "${message}"`);
+            
+            // Gestione per richieste ristorante
+            if (this.isRestaurantBookingRequest(message)) {
+                const restaurantResponse = this.handleRestaurantRequest(message);
+                
+                // Salva nella storia della conversazione
+                const history = await this.conversationManager.getConversationHistory(sessionId);
+                
+                // Aggiungi il messaggio utente alla storia
+                history.push({
+                    role: 'user',
+                    content: message
+                });
+                
+                // Aggiungi la risposta come messaggio dell'assistente
+                history.push({
+                    role: 'assistant',
+                    content: restaurantResponse
+                });
+                
+                // Aggiorna la storia
+                await this.conversationManager.updateConversationHistory(sessionId, history);
+                
+                return {
+                    message: restaurantResponse,
+                    sessionId: sessionId,
+                    source: 'restaurant-system'
+                };
+            }
             
             // Verifica se il messaggio è relativo alle prenotazioni
             if (this.bookingIntegration.isBookingRelatedQuery(message) && userId) {
@@ -96,6 +127,54 @@ class MistralService {
                 source: 'error-handler'
             };
         }
+    }
+
+    // Nuova funzione per identificare le richieste di prenotazione ristorante
+    isRestaurantBookingRequest(message) {
+        const lowerMsg = message.toLowerCase();
+        const restaurantKeywords = [
+            'prenota', 'tavolo', 'ristorante', 'cena', 'pranzo', 'mangiare',
+            'prenotare', 'riservare', 'posto', 'bistrot', 'stasera', 'domani'
+        ];
+        
+        return restaurantKeywords.some(keyword => lowerMsg.includes(keyword));
+    }
+
+    // Nuova funzione per gestire le richieste di prenotazione ristorante
+    handleRestaurantRequest(message) {
+        const lowerMsg = message.toLowerCase();
+        
+        // Se è una richiesta diretta di prenotazione
+        if (lowerMsg.includes('prenota') || lowerMsg.includes('prenotare') || 
+            lowerMsg.includes('riservare') || lowerMsg.includes('vorrei un tavolo')) {
+            
+            return "Sarei felice di aiutarla con la prenotazione al nostro ristorante. " +
+                   "Per procedere, avrei bisogno delle seguenti informazioni:\n\n" +
+                   "- Data e orario desiderati\n" +
+                   "- Numero di persone\n" +
+                   "- Eventuali richieste speciali (es. tavolo all'aperto, menu per celiaci, ecc.)\n\n" +
+                   "Potrebbe fornirmi questi dettagli? In alternativa, posso anche metterla in contatto " +
+                   "direttamente con il nostro staff di ristorazione al numero interno 122 o via email a " +
+                   "ristorante@villapetriolo.com";
+        }
+        
+        // Se è una richiesta di informazioni sul ristorante
+        if (lowerMsg.includes('orari') || lowerMsg.includes('menu') || 
+            lowerMsg.includes('specialità') || lowerMsg.includes('piatti')) {
+            
+            return "Il nostro ristorante è aperto tutti i giorni con i seguenti orari:\n\n" +
+                   "ORARI:\n" +
+                   "- Pranzo: 12:30 - 14:30\n" +
+                   "- Cena: 19:30 - 22:30\n\n" +
+                   "Se desidera prenotare un tavolo o avere informazioni sul menu del giorno, " +
+                   "sarò felice di assisterla. Posso anche metterla in contatto con il nostro " +
+                   "staff di ristorazione per richieste particolari.";
+        }
+        
+        // Risposta generica per altre richieste relative al ristorante
+        return "Il nostro ristorante offre un'esperienza culinaria unica con piatti della tradizione " +
+               "toscana rivisitati in chiave moderna. Posso aiutarla con informazioni su orari, menu " +
+               "o per assistenza nella prenotazione di un tavolo. Mi faccia sapere come posso esserle utile.";
     }
 
     async clearHistory(sessionId) {
