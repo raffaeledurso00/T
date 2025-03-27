@@ -1,6 +1,7 @@
 // backend/src/scripts/populateBookings.js
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
 // Importa il modello Booking
@@ -136,6 +137,7 @@ function generateRandomBooking(userId = null) {
     
     // Create the booking object
     return {
+        _id: uuidv4(),
         guestName,
         userId: userIdentifier,
         checkIn,
@@ -155,15 +157,18 @@ function generateRandomBooking(userId = null) {
 async function populateBookings() {
     try {
         // Connessione a MongoDB
+        console.log('Connecting to MongoDB...');
         await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/villa-petriolo');
         console.log('Connected to MongoDB');
 
         // Elimina le prenotazioni esistenti
+        console.log('Clearing existing bookings...');
         await Booking.deleteMany({});
         console.log('Existing bookings cleared');
 
         // Crea 50 prenotazioni casuali
         const bookings = [];
+        console.log('Generating random bookings...');
         for (let i = 0; i < 50; i++) {
             bookings.push(generateRandomBooking());
         }
@@ -176,6 +181,7 @@ async function populateBookings() {
             "guest@villapetriolo.com"
         ];
 
+        console.log('Creating test user bookings...');
         for (const user of testUsers) {
             // Aggiungi 3 prenotazioni per ogni utente test
             for (let i = 0; i < 3; i++) {
@@ -184,6 +190,7 @@ async function populateBookings() {
         }
 
         // Salva tutte le prenotazioni nel database
+        console.log('Saving bookings to database...');
         await Booking.insertMany(bookings);
         console.log(`${bookings.length} bookings have been created`);
 
@@ -196,4 +203,5 @@ async function populateBookings() {
 }
 
 // Esegui la funzione principale
+console.log('Starting to populate bookings database...');
 populateBookings();

@@ -9,10 +9,12 @@ class MistralController {
     // Process chat messages
     async chat(req, res) {
         const sessionId = req.headers['x-session-id'] || req.body.sessionId || uuidv4();
+        const userId = req.headers['x-user-id'] || req.body.userId || null;
         
         try {
             if (DEBUG) {
                 console.log(`Chat request received for session ${sessionId}`);
+                if (userId) console.log(`Authenticated user: ${userId}`);
                 console.log('Headers:', JSON.stringify(req.headers));
                 console.log('Body:', JSON.stringify(req.body));
             }
@@ -30,8 +32,17 @@ class MistralController {
     
             if (DEBUG) console.log(`Processing message: "${message}" for session ${sessionId}`);
             
-            const response = await mistralService.processMessage(message, sessionId);
+            // Passa l'userId opzionale al servizio
+            const response = await mistralService.processMessage(message, sessionId, userId);
             if (DEBUG) console.log(`Response generated for session ${sessionId}`);
+            
+            // Aggiungi informazioni sull'autenticazione nella risposta
+            if (userId) {
+                response.authenticated = true;
+                // Non inviare l'userId nella risposta per sicurezza
+            } else {
+                response.authenticated = false;
+            }
             
             return res.json(response);
         } catch (error) {
@@ -72,14 +83,30 @@ class MistralController {
     // Initialize a new session
     async initSession(req, res) {
         const sessionId = uuidv4();
+        const userId = req.headers['x-user-id'] || req.body.userId || null;
         
         try {
-            if (DEBUG) console.log(`Initializing new session ${sessionId}`);
+            if (DEBUG) {
+                console.log(`Initializing new session ${sessionId}`);
+                if (userId) console.log(`For authenticated user: ${userId}`);
+            }
+            
             await mistralService.initializeConversation(sessionId);
-            return res.json({ 
+            
+            const response = { 
                 sessionId, 
                 message: 'Session initialized successfully'
-            });
+            };
+            
+            // Aggiungi informazioni sull'autenticazione
+            if (userId) {
+                response.authenticated = true;
+                // Non inviare l'userId nella risposta per sicurezza
+            } else {
+                response.authenticated = false;
+            }
+            
+            return res.json(response);
         } catch (error) {
             console.error(`Error initializing session ${sessionId}:`, error);
             return res.status(500).json({ 

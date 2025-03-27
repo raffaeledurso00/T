@@ -3,6 +3,7 @@ const MistralApiClient = require('./MistralApiClient');
 const ConversationManager = require('./ConversationManager');
 const MessageDetectionUtils = require('./MessageDetectionUtils');
 const ResponseFormatter = require('./ResponseFormatter');
+const BookingIntegration = require('./BookingIntegration');
 
 // Set DEBUG to true for detailed logging
 const DEBUG = false;
@@ -13,11 +14,47 @@ class MistralService {
         this.conversationManager = new ConversationManager();
         this.messageDetection = new MessageDetectionUtils();
         this.responseFormatter = new ResponseFormatter();
+        this.bookingIntegration = BookingIntegration;
     }
 
-    async processMessage(message, sessionId) {
+    async processMessage(message, sessionId, userId = null) {
         try {
             if (DEBUG) console.log(`Processing message for session ${sessionId}: "${message}"`);
+            
+            // Verifica se il messaggio è relativo alle prenotazioni
+            if (this.bookingIntegration.isBookingRelatedQuery(message) && userId) {
+                const bookingResponse = await this.bookingIntegration.handleBookingQuery(message, userId);
+                
+                if (bookingResponse) {
+                    // Se abbiamo una risposta valida dalla gestione prenotazioni, la utilizziamo
+                    // e la memorizziamo nella storia della conversazione
+                    const history = await this.conversationManager.getConversationHistory(sessionId);
+                    
+                    // Aggiungi il messaggio utente alla storia
+                    history.push({
+                        role: 'user',
+                        content: message
+                    });
+                    
+                    // Aggiungi la risposta del sistema di prenotazione come messaggio dell'assistente
+                    history.push({
+                        role: 'assistant',
+                        content: bookingResponse
+                    });
+                    
+                    // Aggiorna la storia
+                    await this.conversationManager.updateConversationHistory(sessionId, history);
+                    
+                    return {
+                        message: bookingResponse,
+                        sessionId: sessionId,
+                        source: 'booking-system'
+                    };
+                }
+            }
+            
+            // Se non è una query di prenotazione o non abbiamo ottenuto una risposta,
+            // procedi con il normale flusso Mistral
             
             // Get conversation history
             const history = await this.conversationManager.getConversationHistory(sessionId);
@@ -45,7 +82,8 @@ class MistralService {
             
             return {
                 message: assistantMessage,
-                sessionId: sessionId
+                sessionId: sessionId,
+                source: 'mistral-ai'
             };
         } catch (error) {
             console.error('Error processing message:', error);
@@ -54,7 +92,8 @@ class MistralService {
             return {
                 message: "Mi scusi, si è verificato un errore nella comunicazione. Può riprovare tra qualche istante?",
                 sessionId: sessionId,
-                error: true
+                error: true,
+                source: 'error-handler'
             };
         }
     }

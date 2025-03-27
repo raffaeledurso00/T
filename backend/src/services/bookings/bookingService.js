@@ -1,8 +1,14 @@
 // backend/src/services/bookingService.js
 const Booking = require('../models/Booking');
 const { isMongoFallbackMode } = require('../config/database');
+const { v4: uuidv4 } = require('uuid');
 
 class BookingService {
+    constructor() {
+        // Inizializza memoria per fallback se MongoDB non è disponibile
+        this.inMemoryBookings = [];
+    }
+
     async getUserBookings(userId) {
         try {
             if (!userId) {
@@ -11,9 +17,8 @@ class BookingService {
             
             let bookings;
             if (isMongoFallbackMode) {
-                // Se siamo in modalità fallback, usiamo una simulazione
-                const { collections } = require('../utils/mongoFallback');
-                bookings = (collections.booking || []).filter(booking => booking.userId === userId);
+                // Se siamo in modalità fallback, usiamo la memoria locale
+                bookings = this.inMemoryBookings.filter(booking => booking.userId === userId);
             } else {
                 // Altrimenti, query standard MongoDB
                 bookings = await Booking.find({ userId: userId }).sort({ checkIn: 1 });
@@ -34,9 +39,8 @@ class BookingService {
             
             let booking;
             if (isMongoFallbackMode) {
-                // Se siamo in modalità fallback, usiamo una simulazione
-                const { collections } = require('../utils/mongoFallback');
-                booking = (collections.booking || []).find(b => 
+                // Se siamo in modalità fallback, cerchiamo in memoria
+                booking = this.inMemoryBookings.find(b => 
                     b._id.toString() === bookingId && 
                     (!userId || b.userId === userId));
             } else {
@@ -55,6 +59,48 @@ class BookingService {
         }
     }
 
+    async createBooking(bookingData) {
+        try {
+            if (!bookingData.userId) {
+                throw new Error('User ID is required for booking');
+            }
+
+            if (!bookingData.checkIn || !bookingData.checkOut) {
+                throw new Error('Check-in and check-out dates are required');
+            }
+
+            if (!bookingData.roomType) {
+                throw new Error('Room type is required');
+            }
+
+            // Genera un ID se non fornito
+            if (!bookingData._id) {
+                bookingData._id = uuidv4();
+            }
+
+            // Imposta stato e timestamp
+            bookingData.status = bookingData.status || 'Pending';
+            bookingData.paymentStatus = bookingData.paymentStatus || 'Pending';
+            bookingData.createdAt = new Date();
+            bookingData.updatedAt = new Date();
+
+            let newBooking;
+            if (isMongoFallbackMode) {
+                // Salva in memoria
+                this.inMemoryBookings.push(bookingData);
+                newBooking = bookingData;
+            } else {
+                // Salva nel database
+                newBooking = await Booking.create(bookingData);
+            }
+
+            return newBooking;
+        } catch (error) {
+            console.error('Error creating booking:', error);
+            throw error;
+        }
+    }
+
     async updateBookingStatus(bookingId, userId, newStatus) {
         try {
             // Verifica che lo stato sia valido
@@ -65,20 +111,19 @@ class BookingService {
             
             let booking;
             if (isMongoFallbackMode) {
-                // Se siamo in modalità fallback, usiamo una simulazione
-                const { collections } = require('../utils/mongoFallback');
-                const bookingIndex = (collections.booking || []).findIndex(b => 
+                // Aggiorna in memoria
+                const bookingIndex = this.inMemoryBookings.findIndex(b => 
                     b._id.toString() === bookingId && b.userId === userId);
                 
                 if (bookingIndex === -1) {
                     throw new Error('Booking not found or you do not have permission to update it');
                 }
                 
-                collections.booking[bookingIndex].status = newStatus;
-                collections.booking[bookingIndex].updatedAt = new Date();
-                booking = collections.booking[bookingIndex];
+                this.inMemoryBookings[bookingIndex].status = newStatus;
+                this.inMemoryBookings[bookingIndex].updatedAt = new Date();
+                booking = this.inMemoryBookings[bookingIndex];
             } else {
-                // Altrimenti, update standard MongoDB
+                // Aggiorna nel database
                 booking = await Booking.findOneAndUpdate(
                     { _id: bookingId, userId: userId },
                     { 
@@ -104,20 +149,19 @@ class BookingService {
         try {
             let booking;
             if (isMongoFallbackMode) {
-                // Se siamo in modalità fallback, usiamo una simulazione
-                const { collections } = require('../utils/mongoFallback');
-                const bookingIndex = (collections.booking || []).findIndex(b => 
+                // Aggiorna in memoria
+                const bookingIndex = this.inMemoryBookings.findIndex(b => 
                     b._id.toString() === bookingId && b.userId === userId);
                 
                 if (bookingIndex === -1) {
                     throw new Error('Booking not found or you do not have permission to update it');
                 }
                 
-                collections.booking[bookingIndex].specialRequests = specialRequests;
-                collections.booking[bookingIndex].updatedAt = new Date();
-                booking = collections.booking[bookingIndex];
+                this.inMemoryBookings[bookingIndex].specialRequests = specialRequests;
+                this.inMemoryBookings[bookingIndex].updatedAt = new Date();
+                booking = this.inMemoryBookings[bookingIndex];
             } else {
-                // Altrimenti, update standard MongoDB
+                // Aggiorna nel database
                 booking = await Booking.findOneAndUpdate(
                     { _id: bookingId, userId: userId },
                     { 
@@ -135,6 +179,52 @@ class BookingService {
             return booking;
         } catch (error) {
             console.error('Error updating special requests:', error);
+            throw error;
+        }
+    }
+
+    // Verifica disponibilità per un periodo
+    async checkAvailability(checkIn, checkOut, roomType) {
+        try {
+            const checkInDate = new Date(checkIn);
+            const checkOutDate = new Date(checkOut);
+
+            // Verifica che le date siano valide
+            if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+                throw new Error('Invalid date format');
+            }
+
+            // Verifica che check-out sia dopo check-in
+            if (checkOutDate <= checkInDate) {
+                throw new Error('Check-out date must be after check-in date');
+            }
+
+            let bookings;
+            if (isMongoFallbackMode) {
+                // Cerca prenotazioni in memoria che si sovrappongono al periodo
+                bookings = this.inMemoryBookings.filter(b => 
+                    b.roomType === roomType &&
+                    b.status !== 'Cancelled' &&
+                    new Date(b.checkIn) < checkOutDate &&
+                    new Date(b.checkOut) > checkInDate
+                );
+            } else {
+                // Cerca nel database
+                bookings = await Booking.find({
+                    roomType: roomType,
+                    status: { $ne: 'Cancelled' },
+                    checkIn: { $lt: checkOutDate },
+                    checkOut: { $gt: checkInDate }
+                });
+            }
+
+            // Se non ci sono prenotazioni sovrapposte, la camera è disponibile
+            return {
+                available: bookings.length === 0,
+                conflictingBookings: bookings
+            };
+        } catch (error) {
+            console.error('Error checking availability:', error);
             throw error;
         }
     }
