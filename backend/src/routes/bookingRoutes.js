@@ -4,9 +4,6 @@ const router = express.Router();
 const bookingController = require('../controllers/bookingController');
 const { authenticateJWT, optionalAuth } = require('../middleware/authMiddleware');
 
-// Middleware per verificare che l'utente sia autenticato
-// Sostituito con authenticateJWT
-
 // Ottieni tutte le prenotazioni dell'utente corrente - richiede autenticazione
 router.get('/', authenticateJWT, bookingController.getUserBookings);
 

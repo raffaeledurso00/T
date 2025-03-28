@@ -20,7 +20,7 @@ dotenv.config();
 
 
 // Initialize passport for authentication
-const passport = initializePassport();
+const passportInstance = initializePassport()
 
 // Initialize express app
 const app = express();
