@@ -159,33 +159,35 @@ const AuthManager = {
     /**
      * Verifica la validità del token
      */
-    verifyToken: async function(token) {
-        try {
-            const response = await fetch('/api/auth/verify-token', {
+    verifyToken: function(token) {
+        return new Promise((resolve) => {
+            fetch('/api/auth/verify-token', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                
-                // Aggiorna i dati utente
-                if (data.user) {
-                    this.state.user = data.user;
-                    localStorage.setItem('user', JSON.stringify(data.user));
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return resolve(false);
                 }
                 
-                return true;
-            } else {
-                return false;
-            }
-        } catch (error) {
-            console.error('Error in token verification:', error);
-            return false;
-        }
+                return response.json().then(data => {
+                    // Aggiorna i dati utente
+                    if (data.user) {
+                        this.state.user = data.user;
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                    }
+                    
+                    resolve(true);
+                });
+            })
+            .catch(error => {
+                console.error('Error in token verification:', error);
+                resolve(false);
+            });
+        });
     },
     
     /**
@@ -204,29 +206,44 @@ const AuthManager = {
     /**
      * Gestisce il logout
      */
-    logout: async function() {
+    logout: function() {
         try {
             // Chiama l'endpoint di logout
-            await fetch('/api/auth/logout', {
+            fetch('/api/auth/logout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 }
+            })
+            .catch(error => {
+                console.error('Error during logout:', error);
+            })
+            .finally(() => {
+                // Indipendentemente dalla risposta, pulisci i dati locali
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('user');
+                
+                // Aggiorna lo stato
+                this.state.isAuthenticated = false;
+                this.state.user = null;
+                
+                // Ricarica la pagina per reinizializzare tutto
+                window.location.reload();
             });
         } catch (error) {
             console.error('Error during logout:', error);
+            
+            // Pulisci comunque i dati locali
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            
+            // Aggiorna lo stato
+            this.state.isAuthenticated = false;
+            this.state.user = null;
+            
+            // Ricarica la pagina per reinizializzare tutto
+            window.location.reload();
         }
-        
-        // Indipendentemente dalla risposta, pulisci i dati locali
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
-        
-        // Aggiorna lo stato
-        this.state.isAuthenticated = false;
-        this.state.user = null;
-        
-        // Ricarica la pagina per reinizializzare tutto
-        window.location.reload();
     }
 };
 

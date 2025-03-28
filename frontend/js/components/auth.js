@@ -58,28 +58,28 @@ const AuthComponent = {
     /**
      * Verifica la validità del token
      */
-    verifyToken: async function(token) {
-        try {
-            const response = await fetch('/api/auth/verify-token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
+    verifyToken: function(token) {
+        fetch('/api/auth/verify-token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => {
             if (response.ok) {
-                // Token valido
-                const data = await response.json();
-                this.state.isAuthenticated = true;
-                
-                // Salva i dati utente se necessario
-                if (data.user) {
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                }
-                
-                // Nascondi il popup se è visibile
-                this.hideAuthPopup();
+                return response.json().then(data => {
+                    // Token valido
+                    this.state.isAuthenticated = true;
+                    
+                    // Salva i dati utente se necessario
+                    if (data.user) {
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                    }
+                    
+                    // Nascondi il popup se è visibile
+                    this.hideAuthPopup();
+                });
             } else {
                 // Token non valido
                 this.state.isAuthenticated = false;
@@ -89,13 +89,14 @@ const AuthComponent = {
                 // Mostra il popup
                 this.showAuthPopup();
             }
-        } catch (error) {
+        })
+        .catch(error => {
             console.error('Error verifying token:', error);
             this.state.isAuthenticated = false;
             
             // Mostra il popup
             this.showAuthPopup();
-        }
+        });
     },
 
     /**
@@ -226,21 +227,35 @@ const AuthComponent = {
             });
         });
         
-        // Login form submission
+        // Login form submission - with improved error handling
         const loginForm = document.getElementById('login-form');
         if (loginForm) {
             loginForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                this.handleLogin();
+                e.stopPropagation();
+                try {
+                    this.handleLogin();
+                } catch (error) {
+                    console.error('Error in login form submission:', error);
+                    this.setMessage('login', 'Si è verificato un errore. Riprova più tardi.', 'error');
+                }
+                return false;
             });
         }
         
-        // Register form submission
+        // Register form submission - with improved error handling
         const registerForm = document.getElementById('register-form');
         if (registerForm) {
             registerForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                this.handleRegister();
+                e.stopPropagation();
+                try {
+                    this.handleRegister();
+                } catch (error) {
+                    console.error('Error in register form submission:', error);
+                    this.setMessage('register', 'Si è verificato un errore. Riprova più tardi.', 'error');
+                }
+                return false;
             });
         }
         
@@ -337,7 +352,7 @@ const AuthComponent = {
     /**
      * Gestisce l'invio del form di login
      */
-    handleLogin: async function() {
+    handleLogin: function() {
         const { email, password } = this.state.formData.login;
         
         // Validazione
@@ -362,21 +377,23 @@ const AuthComponent = {
         this.setLoading(true, 'login');
         this.clearMessage('login');
         
-        try {
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
+        // Using promises instead of async/await to avoid syntax errors
+        fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        })
+        .then(response => {
+            return response.json().then(data => {
+                if (!response.ok) {
+                    throw new Error(data.message || 'Errore durante il login');
+                }
+                return data;
             });
-            
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.message || 'Errore durante il login');
-            }
-            
+        })
+        .then(data => {
             // Login riuscito
             this.setMessage('login', 'Login effettuato con successo!', 'success');
             
@@ -393,20 +410,21 @@ const AuthComponent = {
             setTimeout(() => {
                 this.hideAuthPopup();
             }, 1000);
-            
-        } catch (error) {
+        })
+        .catch(error => {
             console.error('Login error:', error);
             this.setMessage('login', error.message || 'Errore durante il login', 'error');
             this.shakeForm('login');
-        } finally {
+        })
+        .finally(() => {
             this.setLoading(false, 'login');
-        }
+        });
     },
 
     /**
      * Gestisce l'invio del form di registrazione
      */
-    handleRegister: async function() {
+    handleRegister: function() {
         const { name, email, password, confirmPassword } = this.state.formData.register;
         
         // Validazione
@@ -447,21 +465,23 @@ const AuthComponent = {
         this.setLoading(true, 'register');
         this.clearMessage('register');
         
-        try {
-            const response = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ name, email, password })
+        // Using promises instead of async/await to avoid syntax errors
+        fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, email, password })
+        })
+        .then(response => {
+            return response.json().then(data => {
+                if (!response.ok) {
+                    throw new Error(data.message || 'Errore durante la registrazione');
+                }
+                return data;
             });
-            
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.message || 'Errore durante la registrazione');
-            }
-            
+        })
+        .then(data => {
             // Registrazione riuscita
             this.setMessage('register', 'Registrazione completata con successo!', 'success');
             
@@ -478,14 +498,15 @@ const AuthComponent = {
             setTimeout(() => {
                 this.hideAuthPopup();
             }, 1000);
-            
-        } catch (error) {
+        })
+        .catch(error => {
             console.error('Registration error:', error);
             this.setMessage('register', error.message || 'Errore durante la registrazione', 'error');
             this.shakeForm('register');
-        } finally {
+        })
+        .finally(() => {
             this.setLoading(false, 'register');
-        }
+        });
     },
 
     /**

@@ -241,33 +241,69 @@
         }
     });
     </script>
-    <script>
-        // Fix specifico per il form di chat
-        document.addEventListener('DOMContentLoaded', function() {
-          const fixChatForm = function() {
-            const form = document.getElementById('chat-form');
-            if (!form) return;
-            
-            form.addEventListener('submit', function(e) {
-              console.log('Emergency submit prevention');
-              e.preventDefault();
-              e.stopPropagation();
-              
-              const input = document.getElementById('message-input');
-              if (input && input.value.trim() !== '') {
-                if (window.ChatCore && typeof window.ChatCore.handleMessageSubmit === 'function') {
-                  window.ChatCore.handleMessageSubmit(input.value.trim());
-                }
-              }
-              
-              return false;
-            }, true);
-          };
+<script>
+    // Improved fix for chat form submission
+    document.addEventListener('DOMContentLoaded', function() {
+      const fixChatForm = function() {
+        const form = document.getElementById('chat-form');
+        if (!form) return;
+        
+        // Remove any existing listeners by cloning the form
+        const newForm = form.cloneNode(true);
+        if (form.parentNode) {
+          form.parentNode.replaceChild(newForm, form);
+        }
+        
+        // Add a new submit event listener
+        newForm.addEventListener('submit', function(e) {
+          // Prevent default form submission
+          e.preventDefault();
+          e.stopPropagation();
           
-          // Esegui immediatamente e anche dopo il caricamento dell'app
-          fixChatForm();
-          document.addEventListener('appReady', fixChatForm);
+          // Debug log
+          if (window.appConfig?.DEBUG) {
+            console.log('Form submission handled properly');
+          }
+          
+          // Get message from input
+          const input = document.getElementById('message-input');
+          if (input && input.value.trim() !== '') {
+            const message = input.value.trim();
+            
+            if (window.ChatCore && typeof window.ChatCore.handleMessageSubmit === 'function') {
+              try {
+                window.ChatCore.handleMessageSubmit(message);
+              } catch (error) {
+                console.error('Error in handleMessageSubmit:', error);
+                alert('Si è verificato un errore nell\'invio del messaggio. Riprova più tardi.');
+              }
+            } else {
+              console.warn('ChatCore not available or handleMessageSubmit not defined');
+              
+              // Fallback implementation
+              if (typeof handleMessageSubmitFallback === 'function') {
+                handleMessageSubmitFallback(message);
+              } else {
+                alert('Sistema di chat non disponibile. Ricarica la pagina e riprova.');
+              }
+            }
+            
+            // Clear input regardless of success/failure
+            input.value = '';
+          }
+          
+          return false;
         });
-      </script>
+        
+        console.log('Chat form handler properly initialized');
+      };
+      
+      // Execute immediately
+      fixChatForm();
+      
+      // Also run when app is fully loaded
+      document.addEventListener('appReady', fixChatForm);
+    });
+  </script>
 </body>
 </html>
