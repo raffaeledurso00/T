@@ -10,9 +10,17 @@ const routes = require('./routes');
 const { limiter, validateInput, errorHandler } = require('./middleware/security');
 const setupMongoFallbacks = require('./utils/mongoFallback');
 const mistralController = require('./controllers/mistralController');
+const passport = require('passport');
+const cookieParser = require('cookie-parser');
+const initializePassport = require('./config/passportConfig');
+const authRoutes = require('./routes/authRoutes');
 
 // Load environment variables
 dotenv.config();
+
+
+// Initialize passport for authentication
+const passport = initializePassport();
 
 // Initialize express app
 const app = express();
@@ -55,6 +63,10 @@ app.use(cors({
 // Parse request bodies before routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Aggiungi questi middleware dopo le configurazioni CORS:
+app.use(cookieParser()); // Per gestire i cookie
+app.use(passport.initialize());
 
 // Add request logging middleware
 app.use((req, res, next) => {
@@ -101,6 +113,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 // Apply API routes with validation
 app.use('/api', validateInput);
 app.use('/api', routes);
+app.use('/api/auth', authRoutes);
 
 // Root route for health check
 app.get('/', (req, res) => {
