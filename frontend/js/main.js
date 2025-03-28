@@ -32,55 +32,56 @@
   
   // Module groups to load in order
   const moduleGroups = [
-      {
-          name: 'config',
-          files: ['js/config.js']
-      },
-      {
-          name: 'utils',
-          files: [
-              'js/utils/storage.js',
-              'js/utils/formatter/base-formatter.js',
-              'js/utils/formatter/text-utils.js',
-              'js/utils/formatter/menu-formatter.js',
-              'js/utils/formatter/activity-formatter.js',
-              'js/utils/formatter/event-formatter.js',
-              'js/utils/formatter/generic-formatter.js',
-              'js/utils/formatter/index.js',
-              'js/utils/context.js',
-              'js/utils/dom.js'
-          ]
-      },
-      {
-          name: 'api',
-          files: ['js/api/chat.js']
-      },
-      {
-          name: 'components',
-          files: [
-              'js/components/message.js',
-              'js/components/suggestions.js',
-              'js/components/modal.js',
-              'js/components/sidebar.js'
-          ]
-      },
-      {
-          name: 'ui',
-          files: [
-              'js/ui/responsive.js',
-              'js/ui/sidebar-toggle.js',
-              'js/ui/preloader.js'
-          ]
-      },
-      {
-          name: 'core',
-          files: [
-              'js/core/chat.js',
-              'js/core/events.js',
-              'js/core/init.js'
-          ]
-      }
-  ];
+    {
+        name: 'config',
+        files: ['js/config.js']
+    },
+    {
+        name: 'utils',
+        files: [
+            'js/utils/storage.js',
+            'js/utils/auth-manager.js',
+            'js/utils/formatter/base-formatter.js',
+            'js/utils/formatter/text-utils.js',
+            'js/utils/formatter/menu-formatter.js',
+            'js/utils/formatter/activity-formatter.js',
+            'js/utils/formatter/event-formatter.js',
+            'js/utils/formatter/generic-formatter.js',
+            'js/utils/formatter/index.js',
+            'js/utils/context.js',
+            'js/utils/dom.js'
+        ]
+    },
+    {
+        name: 'api',
+        files: ['js/api/chat.js']
+    },
+    {
+        name: 'components',
+        files: [
+            'js/components/auth.js',
+            'js/components/message.js',
+            'js/components/suggestions.js',
+            'js/components/modal.js',
+            'js/components/sidebar.js'
+        ]
+    },
+    {
+        name: 'ui',
+        files: [
+            'js/ui/responsive.js',
+            'js/ui/sidebar-toggle.js',
+            'js/ui/preloader.js'
+        ]
+    },
+    {
+        name: 'core',
+        files: [
+            'js/core/chat.js',
+            'js/core/events.js',
+            'js/core/init.js'
+        ]
+    },
   
   // Function to load a script and track its loading
   function loadScript(src) {

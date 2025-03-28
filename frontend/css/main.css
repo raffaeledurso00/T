@@ -13,6 +13,7 @@
 @import 'components/sidebar.css';
 @import 'components/lists.css';
 @import 'components/suggestions.css';
+@import 'components/auth-popup.css';
 
 @import 'layout/grid.css';
 @import 'layout/header.css';

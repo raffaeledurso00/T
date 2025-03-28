@@ -69,32 +69,35 @@ const PreloaderManager = {
    * Completa l'animazione del preloader e mostra l'app
    */
   completePreloader: function() {
-      console.log('Completing preloader animation');
-      
-      // Interrompi l'animazione di pulsazione del logo
-      gsap.killTweensOf(this.preloaderLogo);
-      
-      // Anima la dissolvenza di tutto il preloader
-      gsap.to(this.preloader, {
-          autoAlpha: 0,
-          duration: 0.8,
-          onComplete: () => {
-              // Nascondi completamente il preloader
-              this.preloader.style.display = 'none';
-              
-              // Mostra l'interfaccia della chat con un'animazione di dissolvenza
-              gsap.to(this.chatContainer, {
-                  opacity: 1,
-                  duration: 0.6,
-                  onComplete: () => {
-                      // Trigger appReady event
-                      const event = new Event('appReady');
-                      document.dispatchEvent(event);
-                  }
-              });
-          }
-      });
-  },
+    console.log('Completing preloader animation');
+    
+    // Interrompi l'animazione di pulsazione del logo
+    gsap.killTweensOf(this.preloaderLogo);
+    
+    // Anima la dissolvenza di tutto il preloader
+    gsap.to(this.preloader, {
+        autoAlpha: 0,
+        duration: 0.8,
+        onComplete: () => {
+            // Nascondi completamente il preloader
+            this.preloader.style.display = 'none';
+            
+            // Mostra l'interfaccia della chat con un'animazione di dissolvenza
+            gsap.to(this.chatContainer, {
+                opacity: 1,
+                duration: 0.6,
+                onComplete: () => {
+                    // Aggiungi classe per indicare che l'app è caricata
+                    document.body.classList.add('app-loaded');
+                    
+                    // Trigger appReady event
+                    const event = new Event('appReady');
+                    document.dispatchEvent(event);
+                }
+            });
+        }
+    });
+},
   
   /**
    * Configura un timeout di sicurezza per il preloader
