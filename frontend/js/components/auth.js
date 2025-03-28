@@ -1,3 +1,5 @@
+// Soluzione completa con configurazione centralizzata degli URL
+
 // frontend/js/components/auth.js
 // Gestione del popup di autenticazione
 
@@ -42,6 +44,19 @@ const AuthComponent = {
     },
 
     /**
+     * Ottiene l'URL base del backend
+     */
+    getBaseUrl: function() {
+        // Prima verifica se esiste la configurazione globale
+        if (window.appConfig && window.appConfig.BACKEND_URL) {
+            return window.appConfig.BACKEND_URL;
+        }
+        
+        // Altrimenti usa l'URL predefinito (porta 3001)
+        return 'http://localhost:3001';
+    },
+
+    /**
      * Controlla se l'utente è già autenticato
      */
     checkAuthentication: function() {
@@ -59,7 +74,9 @@ const AuthComponent = {
      * Verifica la validità del token
      */
     verifyToken: function(token) {
-        fetch('/api/auth/verify-token', {
+        const baseUrl = this.getBaseUrl();
+        
+        fetch(`${baseUrl}/api/auth/verify-token`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -263,14 +280,16 @@ const AuthComponent = {
         const googleAuthBtn = document.getElementById('google-auth');
         if (googleAuthBtn) {
             googleAuthBtn.addEventListener('click', () => {
-                window.location.href = '/api/auth/google';
+                const baseUrl = this.getBaseUrl();
+                window.location.href = `${baseUrl}/api/auth/google`;
             });
         }
         
         const facebookAuthBtn = document.getElementById('facebook-auth');
         if (facebookAuthBtn) {
             facebookAuthBtn.addEventListener('click', () => {
-                window.location.href = '/api/auth/facebook';
+                const baseUrl = this.getBaseUrl();
+                window.location.href = `${baseUrl}/api/auth/facebook`;
             });
         }
         
@@ -377,8 +396,10 @@ const AuthComponent = {
         this.setLoading(true, 'login');
         this.clearMessage('login');
         
+        const baseUrl = this.getBaseUrl();
+        
         // Using promises instead of async/await to avoid syntax errors
-        fetch('/api/auth/login', {
+        fetch(`${baseUrl}/api/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -386,12 +407,18 @@ const AuthComponent = {
             body: JSON.stringify({ email, password })
         })
         .then(response => {
-            return response.json().then(data => {
-                if (!response.ok) {
-                    throw new Error(data.message || 'Errore durante il login');
+            if (!response.ok) {
+                // Verifica se la risposta è JSON o HTML
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Errore durante il login');
+                    });
+                } else {
+                    throw new Error(`Errore del server: ${response.status}`);
                 }
-                return data;
-            });
+            }
+            return response.json();
         })
         .then(data => {
             // Login riuscito
@@ -465,8 +492,10 @@ const AuthComponent = {
         this.setLoading(true, 'register');
         this.clearMessage('register');
         
+        const baseUrl = this.getBaseUrl();
+        
         // Using promises instead of async/await to avoid syntax errors
-        fetch('/api/auth/register', {
+        fetch(`${baseUrl}/api/auth/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -474,12 +503,18 @@ const AuthComponent = {
             body: JSON.stringify({ name, email, password })
         })
         .then(response => {
-            return response.json().then(data => {
-                if (!response.ok) {
-                    throw new Error(data.message || 'Errore durante la registrazione');
+            if (!response.ok) {
+                // Verifica se la risposta è JSON o HTML
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Errore durante la registrazione');
+                    });
+                } else {
+                    throw new Error(`Errore del server: ${response.status}`);
                 }
-                return data;
-            });
+            }
+            return response.json();
         })
         .then(data => {
             // Registrazione riuscita

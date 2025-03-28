@@ -242,67 +242,60 @@
     });
     </script>
 <script>
-    // Improved fix for chat form submission
+    // Soluzione per il form con log essenziali
     document.addEventListener('DOMContentLoaded', function() {
-      const fixChatForm = function() {
-        const form = document.getElementById('chat-form');
-        if (!form) return;
+      console.log('[Form Fix] Inizializzazione');
+      
+      const form = document.getElementById('chat-form');
+      if (!form) {
+        console.error('[Form Fix] Form chat-form non trovato!');
+        return;
+      }
+      
+      console.log('[Form Fix] Form trovato, imposto handler');
+      
+      form.onsubmit = function(e) {
+        console.log('[Form Fix] Form inviato');
+        e.preventDefault();
         
-        // Remove any existing listeners by cloning the form
-        const newForm = form.cloneNode(true);
-        if (form.parentNode) {
-          form.parentNode.replaceChild(newForm, form);
+        const input = document.getElementById('message-input');
+        if (!input || !input.value.trim()) {
+          console.log('[Form Fix] Input vuoto, nessuna azione');
+          return false;
         }
         
-        // Add a new submit event listener
-        newForm.addEventListener('submit', function(e) {
-          // Prevent default form submission
-          e.preventDefault();
-          e.stopPropagation();
-          
-          // Debug log
-          if (window.appConfig?.DEBUG) {
-            console.log('Form submission handled properly');
-          }
-          
-          // Get message from input
-          const input = document.getElementById('message-input');
-          if (input && input.value.trim() !== '') {
-            const message = input.value.trim();
-            
-            if (window.ChatCore && typeof window.ChatCore.handleMessageSubmit === 'function') {
-              try {
-                window.ChatCore.handleMessageSubmit(message);
-              } catch (error) {
-                console.error('Error in handleMessageSubmit:', error);
-                alert('Si è verificato un errore nell\'invio del messaggio. Riprova più tardi.');
-              }
-            } else {
-              console.warn('ChatCore not available or handleMessageSubmit not defined');
-              
-              // Fallback implementation
-              if (typeof handleMessageSubmitFallback === 'function') {
-                handleMessageSubmitFallback(message);
-              } else {
-                alert('Sistema di chat non disponibile. Ricarica la pagina e riprova.');
-              }
-            }
-            
-            // Clear input regardless of success/failure
-            input.value = '';
-          }
-          
-          return false;
-        });
+        const message = input.value.trim();
+        console.log('[Form Fix] Messaggio da inviare:', message);
+        input.value = '';
         
-        console.log('Chat form handler properly initialized');
+        if (window.ChatCore && typeof window.ChatCore.handleMessageSubmit === 'function') {
+          console.log('[Form Fix] ChatCore trovato, invio messaggio');
+          try {
+            window.ChatCore.handleMessageSubmit(message);
+            console.log('[Form Fix] Messaggio inviato correttamente');
+          } catch (error) {
+            console.error('[Form Fix] Errore durante invio:', error);
+            
+            // Ripristina il messaggio nell'input in caso di errore
+            input.value = message;
+          }
+        } else {
+          console.error('[Form Fix] ChatCore non disponibile!', {
+            chatCoreExists: !!window.ChatCore,
+            handleMessageSubmitExists: window.ChatCore ? typeof window.ChatCore.handleMessageSubmit : 'N/A'
+          });
+          
+          // Ripristina il messaggio nell'input
+          input.value = message;
+          
+          // Mostra messaggio all'utente
+          alert('Si è verificato un errore. Ricarica la pagina e riprova.');
+        }
+        
+        return false;
       };
       
-      // Execute immediately
-      fixChatForm();
-      
-      // Also run when app is fully loaded
-      document.addEventListener('appReady', fixChatForm);
+      console.log('[Form Fix] Inizializzazione completata');
     });
   </script>
 </body>
