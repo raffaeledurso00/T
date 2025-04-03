@@ -4,10 +4,12 @@
   "description": "Backend for Villa Petriolo booking system",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
+    "start": "node src/server.js",
+    "dev": "node install-deps.js && nodemon src/server.js",
     "init-db": "node src/scripts/initDb.js",
-    "test": "jest"
+    "test": "jest",
+    "test-auth": "node test-auth.js",
+    "test-mongo": "node src/utils/mongoTest.js"
   },
   "keywords": [
     "chatbot",

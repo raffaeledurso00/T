@@ -2,7 +2,7 @@
 // Configurazione globale dell'applicazione
 const config = {
     // API Configuration
-    BACKEND_URL: 'http://localhost:3001',
+    BACKEND_URL: window.location.hostname === 'localhost' ? 'http://localhost:3001' : window.location.origin,
     API_TIMEOUT: 10000,
 
     // Storage keys
@@ -45,7 +45,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
 const appConfig = {
     // API Configuration
-    BACKEND_URL: 'http://localhost:3001',
+    BACKEND_URL: window.location.hostname === 'localhost' ? 'http://localhost:3001' : window.location.origin,
     API_TIMEOUT: 10000,
 
     // Storage keys

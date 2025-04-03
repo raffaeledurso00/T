@@ -2,11 +2,12 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copia package.json e package-lock.json
+# Copia package.json, package-lock.json e lo script di installazione
 COPY backend/package*.json ./
+COPY backend/install-deps.js ./
 
 # Installa le dipendenze
-RUN npm install
+RUN npm install && node install-deps.js
 
 # Copia il resto dei file dell'applicazione
 COPY backend/ ./

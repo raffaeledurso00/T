@@ -2,10 +2,25 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const passport = require('passport');
 const morgan = require('morgan');
 const { connectMongoDB, connectRedis } = require('./config/database');
+const passportConfig = require('./config/passport');
 const chatRoutes = require('./routes/chatRoutes');
-const openAIService = require('./services/ai/OpenAIService');
+const authRoutes = require('./routes/authRoutes');
+
+// Importa i servizi AI in modo condizionale
+let openAIService;
+try {
+    openAIService = require('./services/ai/OpenAIService');
+} catch (error) {
+    console.warn('OpenAI service not available, skipping initialization');
+    // Crea un servizio mock
+    openAIService = {
+        cleanupOldConversations: () => console.log('Mock cleanup - no action needed')
+    };
+}
 
 // Load environment variables
 dotenv.config();
@@ -14,17 +29,61 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Configure CORS options
+const corsWhitelist = process.env.CORS_WHITELIST ? process.env.CORS_WHITELIST.split(',') : ['http://localhost:3000', 'http://127.0.0.1:3000'];
 const corsOptions = {
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'X-Session-ID'],
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl, Postman)
+        if (!origin || corsWhitelist.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.warn(`CORS blocked request from: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Session-ID'],
     credentials: true
 };
 
 // Middleware
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
+app.use(cookieParser());
+app.use(passport.initialize());
 app.use(morgan('dev'));
+
+// Routes
+app.use('/api/chat', chatRoutes);
+app.use('/api/auth', authRoutes);
+
+// Health check endpoints for ping
+app.get('/ping', (req, res) => {
+    res.status(200).json({ status: 'ok', message: 'Server is running' });
+});
+
+app.post('/ping', (req, res) => {
+    res.status(200).json({ status: 'ok', message: 'Server is running' });
+});
+
+// Diagnostics endpoint
+app.get('/diagnostics', (req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        nodeVersion: process.version,
+        env: {
+            nodeEnv: process.env.NODE_ENV || 'not set',
+            port: process.env.PORT || '3001',
+            mongodbUri: process.env.MONGODB_URI ? 'set' : 'not set',
+            redisUrl: process.env.REDIS_URL ? 'set' : 'not set',
+            mistralApiKey: process.env.MISTRAL_API_KEY ? 'set' : 'not set',
+            frontendUrl: process.env.FRONTEND_URL || 'not set',
+            corsWhitelist: process.env.CORS_WHITELIST || 'not set'
+        },
+        memory: process.memoryUsage(),
+        uptime: process.uptime()
+    });
+});
 
 // Custom request logger
 app.use((req, res, next) => {

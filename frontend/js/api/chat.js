@@ -68,9 +68,8 @@ const ChatAPI = {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-        // Determine the correct API URL
-        // Try direct endpoint for local development
-        const apiUrl = 'http://localhost:3001/chat/message';
+        // Determine the correct API URL using the config
+        const apiUrl = `${window.appConfig.BACKEND_URL}/api/chat/message`;
         
         // Prepare payload with minimal data to avoid issues
         const payload = {
@@ -144,8 +143,8 @@ const ChatAPI = {
         return { success: false, message: 'No session to clear' };
       }
       
-      // Direct URL for testing
-      const apiUrl = 'http://localhost:3001/api/chat/clear-history';
+      // Use the config URL
+      const apiUrl = `${window.appConfig.BACKEND_URL}/api/chat/clear-history`;
       
       console.log('Clearing history with URL:', apiUrl);
       
@@ -187,8 +186,8 @@ const ChatAPI = {
         return [];
       }
       
-      // Direct URL for testing
-      const apiUrl = `http://localhost:3001/api/chat/history/${sessionId}`;
+      // Use the config URL
+      const apiUrl = `${window.appConfig.BACKEND_URL}/api/chat/history/${sessionId}`;
       
       console.log('Getting history with URL:', apiUrl);
       
@@ -218,19 +217,69 @@ const ChatAPI = {
    */
   testConnection: async function() {
     try {
-      const response = await fetch('http://localhost:3001/ping', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ping: Date.now() })
-      });
+      const pingUrl = window.appConfig.BACKEND_URL + '/ping';
+      console.log('Testing connection to:', pingUrl);
       
-      if (!response.ok) {
-        return false;
+      // Prova prima con GET
+      try {
+        const response = await fetch(pingUrl, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'cors',
+          cache: 'no-cache',
+          credentials: 'omit' // Importante per evitare problemi CORS
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Connection test result (GET):', data);
+          return true;
+        }
+      } catch (getError) {
+        console.log('GET ping failed, trying POST...');
       }
       
-      const data = await response.json();
-      console.log('Connection test result:', data);
-      return true;
+      // Prova con POST come fallback
+      try {
+        const postResponse = await fetch(pingUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'cors',
+          cache: 'no-cache',
+          credentials: 'omit', // Importante per evitare problemi CORS
+          body: JSON.stringify({})
+        });
+        
+        if (postResponse.ok) {
+          const data = await postResponse.json();
+          console.log('Connection test result (POST):', data);
+          return true;
+        }
+      } catch (postError) {
+        console.log('POST ping failed, trying PHP fallback...');
+      }
+      
+      // Prova con PHP fallback come ultima risorsa
+      try {
+        const phpUrl = window.location.origin + '/ping.php';
+        console.log('Testing PHP fallback at:', phpUrl);
+        
+        const phpResponse = await fetch(phpUrl, {
+          method: 'GET',
+          cache: 'no-cache',
+          credentials: 'omit'
+        });
+        
+        if (phpResponse.ok) {
+          const data = await phpResponse.json();
+          console.log('Connection test result (PHP):', data);
+          return true;
+        }
+      } catch (phpError) {
+        console.log('All ping attempts failed');
+      }
+      
+      return false;
     } catch (error) {
       console.error('Connection test failed:', error);
       return false;

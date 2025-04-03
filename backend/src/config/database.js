@@ -54,7 +54,7 @@ class RedisFallback {
 
 // Stato globale delle connessioni
 let isMongoFallbackMode = false;
-let isRedisFallbackMode = true;
+let isRedisFallbackMode = false;
 let redisClient = new RedisFallback(); // Start with fallback by default
 let mongoConnectionAttempts = 0;
 let redisConnectionAttempts = 0;

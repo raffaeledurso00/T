@@ -1,6 +1,7 @@
 // src/services/auth/authService.js
 const jwt = require('jsonwebtoken');
 const User = require('../../models/User');
+const UserAdapter = require('../../models/UserAdapter');
 const authConfig = require('../../config/authConfig');
 const { redisClient, isRedisFallbackMode } = require('../../config/database');
 const { v4: uuidv4 } = require('uuid');
@@ -131,24 +132,8 @@ class AuthService {
 
     async registerUser(userData) {
         try {
-            // Controlla se l'utente esiste già
-            const existingUser = await User.findOne({ email: userData.email });
-            if (existingUser) {
-                throw new Error('Email already in use');
-            }
-            
-            // Crea un nuovo utente
-            const user = new User({
-                email: userData.email,
-                password: userData.password,
-                name: userData.name,
-                authProvider: 'local'
-            });
-            
-            // Salva l'utente nel database
-            await user.save();
-            
-            return user;
+            // Usa l'adapter per creare un nuovo utente
+            return await UserAdapter.createUser(userData);
         } catch (error) {
             console.error('Error registering user:', error);
             throw error;
@@ -157,28 +142,8 @@ class AuthService {
 
     async loginUser(email, password) {
         try {
-            // Trova l'utente per email
-            const user = await User.findOne({ email });
-            if (!user) {
-                throw new Error('User not found');
-            }
-            
-            // Verifica se l'utente utilizza autenticazione locale
-            if (user.authProvider !== 'local') {
-                throw new Error(`This account uses ${user.authProvider} authentication`);
-            }
-            
-            // Controlla la password
-            const isMatch = await user.comparePassword(password);
-            if (!isMatch) {
-                throw new Error('Invalid password');
-            }
-            
-            // Aggiorna l'ultimo accesso
-            user.lastLogin = Date.now();
-            await user.save();
-            
-            return user;
+            // Usa l'adapter per trovare l'utente e verificare le credenziali
+            return await UserAdapter.findUserByCredentials(email, password);
         } catch (error) {
             console.error('Error logging in user:', error);
             throw error;
