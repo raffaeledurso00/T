@@ -65,9 +65,32 @@
                 <!-- Le chat precedenti verranno mostrate qui -->
             </div>
             <div class="sidebar-footer">
-                <div class="user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <span>Ospite</span>
+                <div class="sidebar-footer-row">
+                    <div class="user-info" id="user-dropdown-toggle">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="user-name">Ospite</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="sidebar-actions">
+                        <button id="settings-menu-toggle" class="settings-menu-toggle">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- Dropdown menu per l'utente -->
+                <div id="user-dropdown" class="user-dropdown">
+                    <div class="dropdown-item" id="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </div>
+                </div>
+                <!-- Dropdown menu per le impostazioni -->
+                <div id="settings-dropdown" class="settings-dropdown">
+                    <div class="dropdown-item" id="delete-all-chats-btn">
+                        <i class="fas fa-trash-alt"></i> Elimina tutte le chat
+                    </div>
+                    <div class="dropdown-item" id="settings-btn">
+                        <i class="fas fa-cog"></i> Impostazioni
+                    </div>
                 </div>
             </div>
         </div>

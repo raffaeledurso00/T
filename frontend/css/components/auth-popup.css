@@ -338,3 +338,51 @@
 .password-toggle:hover {
     color: white;
 }
+
+/* Remember Me Checkbox */
+.remember-me-container {
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.remember-me input[type="checkbox"] {
+    margin-right: 8px;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 1px solid #555;
+    border-radius: 3px;
+    background-color: #333;
+    position: relative;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.remember-me input[type="checkbox"]:checked {
+    background-color: rgb(159, 136, 124);
+    border-color: rgb(159, 136, 124);
+}
+
+.remember-me input[type="checkbox"]:checked::after {
+    content: '\2714';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+}
+
+.checkbox-label {
+    user-select: none;
+}

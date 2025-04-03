@@ -60,10 +60,143 @@
 .sidebar-footer {
     padding: 15px;
     border-top: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+}
+
+.sidebar-footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .user-info {
     display: flex;
     align-items: center;
     gap: 10px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    flex: 1;
+}
+
+.user-info:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-info i.fa-chevron-down {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-left: 5px;
+}
+
+.sidebar-actions {
+    display: flex;
+    align-items: center;
+}
+
+.settings-menu-toggle {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.settings-menu-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Stile per i dropdown */
+.user-dropdown,
+.settings-dropdown {
+    position: absolute;
+    background-color: #333;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    width: 200px;
+    z-index: 100;
+    display: none;
+    /* Posizionamento verso l'alto invece che verso il basso */
+    bottom: 55px;
+}
+
+.user-dropdown {
+    left: 15px;
+}
+
+.settings-dropdown {
+    right: 15px;
+}
+
+.dropdown-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-item i {
+    width: 16px;
+    text-align: center;
+}
+
+.user-dropdown.active,
+.settings-dropdown.active {
+    display: block;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Styles for when user is not authenticated */
+.sidebar-chats.disabled {
+    opacity: 0.7;
+}
+
+.no-chats-message {
+    text-align: center;
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.7);
+    font-style: italic;
+}
+
+.new-chat button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Login prompt styling */
+.login-prompt {
+    text-align: center;
+    padding: 30px;
+    max-width: 450px;
+    margin: 80px auto 0;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.login-prompt h2 {
+    margin-top: 0;
+    color: #9f887c;
+}
+
+.login-instructions {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 6px;
+    background-color: rgba(159, 136, 124, 0.1);
+    border-left: 3px solid #9f887c;
 }

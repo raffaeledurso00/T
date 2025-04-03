@@ -8,7 +8,8 @@ const AuthManager = {
     state: {
         isInitialized: false,
         isAuthenticated: false,
-        user: null
+        user: null,
+        rememberMe: false
     },
     
     /**
@@ -85,6 +86,9 @@ const AuthManager = {
             // Se non autenticato, inizializza e mostra il componente di autenticazione
             console.log('User not authenticated, showing auth popup');
             
+            // Nascondi la sidebar delle chat e mostra solo il componente di autenticazione
+            this.updateUIForUnauthenticated();
+            
             if (window.AuthComponent) {
                 // Inizializza il componente se non è già inizializzato
                 window.AuthComponent.init();
@@ -101,6 +105,11 @@ const AuthManager = {
             
             // Aggiorna la UI con lo stato dell'utente
             this.updateUI();
+            
+            // Inizializza le chat solo per utenti autenticati
+            if (typeof window.ChatCore?.init === 'function') {
+                window.ChatCore.init();
+            }
         }
     },
     
@@ -110,6 +119,9 @@ const AuthManager = {
     checkAuthState: function() {
         const accessToken = localStorage.getItem('accessToken');
         const userJson = localStorage.getItem('user');
+        const rememberMe = localStorage.getItem('rememberMe') === 'true';
+        
+        this.state.rememberMe = rememberMe;
         
         if (accessToken) {
             // Imposta isAuthenticated a true, ma verifica comunque il token
@@ -119,6 +131,8 @@ const AuthManager = {
             if (userJson) {
                 try {
                     this.state.user = JSON.parse(userJson);
+                    // Aggiorna immediatamente l'UI
+                    this.updateUI();
                 } catch (error) {
                     console.error('Error parsing user data:', error);
                     // Cancella i dati corrotti
@@ -138,6 +152,9 @@ const AuthManager = {
                         localStorage.removeItem('accessToken');
                         localStorage.removeItem('user');
                         
+                        // Aggiorna l'UI per l'utente non autenticato
+                        this.updateUIForUnauthenticated();
+                        
                         // Se l'app è già caricata, mostra il popup
                         if (document.body.classList.contains('app-loaded') || document.querySelector('.page-wrapper__content.loaded')) {
                             if (window.AuthComponent) {
@@ -145,6 +162,9 @@ const AuthManager = {
                                 window.AuthComponent.showAuthPopup();
                             }
                         }
+                    } else {
+                        // Token valido, aggiorna l'UI
+                        this.updateUI();
                     }
                 })
                 .catch(error => {
@@ -153,6 +173,9 @@ const AuthManager = {
         } else {
             this.state.isAuthenticated = false;
             this.state.user = null;
+            
+            // Aggiorna l'UI per l'utente non autenticato
+            this.updateUIForUnauthenticated();
         }
     },
     
@@ -197,9 +220,142 @@ const AuthManager = {
         if (!this.state.user) return;
         
         // Aggiorna il nome utente nella sidebar
-        const userInfoElement = document.querySelector('.user-info span');
-        if (userInfoElement) {
-            userInfoElement.textContent = this.state.user.name || 'Utente';
+        const userNameElement = document.getElementById('user-name');
+        if (userNameElement) {
+            userNameElement.textContent = this.state.user.name || 'Utente';
+        }
+        
+        // Aggiorna anche eventuali altri elementi UI relativi all'utente
+        document.querySelectorAll('.user-info span:not(#user-name)').forEach(el => {
+            el.textContent = this.state.user.name || 'Utente';
+        });
+        
+        // Abilita funzionalità per utenti autenticati
+        const newChatBtn = document.getElementById('new-chat-btn');
+        if (newChatBtn) {
+            newChatBtn.disabled = false;
+            newChatBtn.classList.remove('disabled');
+        }
+        
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        if (messageInput) {
+            messageInput.disabled = false;
+            messageInput.placeholder = 'Scrivi un messaggio...';
+        }
+        if (sendButton) {
+            sendButton.disabled = false;
+        }
+        
+        // Rimuovi eventuali messaggi di login
+        const loginPrompt = document.querySelector('.login-prompt');
+        if (loginPrompt) {
+            loginPrompt.remove();
+        }
+        
+        // Mostra il messaggio di benvenuto
+        const welcomeMessage = document.getElementById('welcome-message');
+        if (welcomeMessage) {
+            welcomeMessage.style.display = 'block';
+        }
+        
+        // Rimuovi la classe disabled dalla sidebar
+        const sidebarChats = document.getElementById('sidebar-chats');
+        if (sidebarChats) {
+            sidebarChats.classList.remove('disabled');
+        }
+    },
+    
+    /**
+     * Aggiorna l'UI per l'utente non autenticato
+     */
+    updateUIForUnauthenticated: function() {
+        console.log('Updating UI for unauthenticated user');
+        
+        // Nascondi la sidebar delle chat
+        const sidebarChats = document.getElementById('sidebar-chats');
+        if (sidebarChats) {
+            sidebarChats.innerHTML = '<div class="no-chats-message">Effettua il login per visualizzare le chat</div>';
+            sidebarChats.classList.add('disabled');
+        }
+        
+        // Disabilita il pulsante 'Nuova chat'
+        const newChatBtn = document.getElementById('new-chat-btn');
+        if (newChatBtn) {
+            newChatBtn.disabled = true;
+            newChatBtn.classList.add('disabled');
+        }
+        
+        // Nascondi i messaggi nel container principale
+        const messagesContainer = document.getElementById('messages-container');
+        if (messagesContainer) {
+            // Salva i contenuti attuali per il messaggio di benvenuto
+            const welcomeMessage = document.getElementById('welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.style.display = 'none';
+            }
+            
+            // Rimuovi eventuali messaggi di login precedenti
+            const oldLoginPrompt = document.querySelector('.login-prompt');
+            if (oldLoginPrompt) {
+                oldLoginPrompt.remove();
+            }
+            
+            // Mostra un messaggio per l'utente non autenticato
+            const loginPrompt = document.createElement('div');
+            loginPrompt.className = 'login-prompt';
+            loginPrompt.innerHTML = `
+                <h2>Benvenuto a Villa Petriolo</h2>
+                <p>Per utilizzare il Concierge Digitale, è necessario effettuare il login.</p>
+                <div class="login-instructions">
+                    <p>Clicca sull'icona utente per accedere al tuo account.</p>
+                </div>
+            `;
+            messagesContainer.appendChild(loginPrompt);
+        }
+        
+        // Disabilita l'input di chat
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        if (messageInput) {
+            messageInput.disabled = true;
+            messageInput.placeholder = 'Effettua il login per inviare messaggi...';
+        }
+        if (sendButton) {
+            sendButton.disabled = true;
+        }
+    },
+    
+    /**
+     * Gestisce il login dell'utente
+     * @param {Object} userData - Dati dell'utente
+     * @param {string} token - Token di accesso
+     * @param {boolean} rememberMe - Flag per ricordare l'utente
+     */
+    handleLogin: function(userData, token, rememberMe) {
+        console.log('Handling login with remember me:', rememberMe);
+        
+        // Salva i dati dell'utente
+        this.state.user = userData;
+        this.state.isAuthenticated = true;
+        this.state.rememberMe = rememberMe;
+        
+        // Salva i dati nel localStorage
+        localStorage.setItem('accessToken', token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('rememberMe', rememberMe.toString());
+        
+        // Aggiorna l'UI
+        this.updateUI();
+        
+        // Inizializza il ChatCore se disponibile
+        if (typeof window.ChatCore?.init === 'function') {
+            window.ChatCore.init();
+        }
+        
+        // Chiudi il popup di autenticazione se aperto
+        if (window.AuthComponent && typeof window.AuthComponent.hideAuthPopup === 'function') {
+            window.AuthComponent.hideAuthPopup();
         }
     },
     
@@ -208,6 +364,9 @@ const AuthManager = {
      */
     logout: function() {
         try {
+            // Chiamiamo prima l'updateUIForUnauthenticated per evitare flash di contenuto
+            this.updateUIForUnauthenticated();
+            
             // Chiama l'endpoint di logout
             fetch('/api/auth/logout', {
                 method: 'POST',
@@ -222,13 +381,20 @@ const AuthManager = {
                 // Indipendentemente dalla risposta, pulisci i dati locali
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('user');
+                // Mantieni rememberMe se impostato
                 
                 // Aggiorna lo stato
                 this.state.isAuthenticated = false;
                 this.state.user = null;
                 
-                // Ricarica la pagina per reinizializzare tutto
-                window.location.reload();
+                // Mostra il popup di login
+                if (window.AuthComponent) {
+                    window.AuthComponent.init();
+                    window.AuthComponent.showAuthPopup();
+                } else {
+                    // Ricarica la pagina come fallback
+                    window.location.reload();
+                }
             });
         } catch (error) {
             console.error('Error during logout:', error);
@@ -241,8 +407,17 @@ const AuthManager = {
             this.state.isAuthenticated = false;
             this.state.user = null;
             
-            // Ricarica la pagina per reinizializzare tutto
-            window.location.reload();
+            // Aggiorna l'UI per utente non autenticato
+            this.updateUIForUnauthenticated();
+            
+            // Mostra il popup di login
+            if (window.AuthComponent) {
+                window.AuthComponent.init();
+                window.AuthComponent.showAuthPopup();
+            } else {
+                // Ricarica la pagina come fallback
+                window.location.reload();
+            }
         }
     }
 };

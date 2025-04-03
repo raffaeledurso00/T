@@ -54,8 +54,227 @@ const SidebarComponent = {
     // Add click events
     this.setupChatItemListeners();
     this.setupDeleteButtons();
+    this.setupDropdownMenus();
     
     console.log('DEBUG: Chat list update completed');
+  },
+  
+  /**
+   * Configura i listener per i menu dropdown e logout
+   */
+  setupDropdownMenus: function() {
+    console.log('DEBUG: Setting up dropdown menus');
+    
+    // Elimina eventuali event listener precedenti clonando e sostituendo gli elementi
+    this.removeOldEventListenersFromDropdowns();
+    
+    // User dropdown toggle
+    const userDropdownToggle = document.getElementById('user-dropdown-toggle');
+    const userDropdown = document.getElementById('user-dropdown');
+    
+    if (userDropdownToggle && userDropdown) {
+      userDropdownToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userDropdown.classList.toggle('active');
+        
+        // Chiudi l'altro dropdown se aperto
+        const settingsDropdown = document.getElementById('settings-dropdown');
+        if (settingsDropdown && settingsDropdown.classList.contains('active')) {
+          settingsDropdown.classList.remove('active');
+        }
+      });
+      console.log('DEBUG: User dropdown toggle event listener added');
+    } else {
+      console.error('DEBUG: User dropdown toggle or dropdown not found');
+    }
+    
+    // Settings dropdown toggle
+    const settingsMenuToggle = document.getElementById('settings-menu-toggle');
+    const settingsDropdown = document.getElementById('settings-dropdown');
+    
+    if (settingsMenuToggle && settingsDropdown) {
+      settingsMenuToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        settingsDropdown.classList.toggle('active');
+        
+        // Chiudi l'altro dropdown se aperto
+        if (userDropdown && userDropdown.classList.contains('active')) {
+          userDropdown.classList.remove('active');
+        }
+      });
+      console.log('DEBUG: Settings dropdown toggle event listener added');
+    } else {
+      console.error('DEBUG: Settings dropdown toggle or dropdown not found');
+    }
+    
+    // Configura i pulsanti nei menu
+    this.setupDropdownButtons();
+    
+    console.log('DEBUG: Dropdown menus setup completed');
+  },
+  
+  /**
+   * Rimuove gli event listener esistenti dagli elementi dropdown
+   */
+  removeOldEventListenersFromDropdowns: function() {
+    const userDropdownToggle = document.getElementById('user-dropdown-toggle');
+    const settingsMenuToggle = document.getElementById('settings-menu-toggle');
+    const logoutBtn = document.getElementById('logout-btn');
+    const deleteAllChatsBtn = document.getElementById('delete-all-chats-btn');
+    const settingsBtn = document.getElementById('settings-btn');
+    
+    // Clona e sostituisci gli elementi per rimuovere i listener
+    if (userDropdownToggle && userDropdownToggle.parentNode) {
+      const newToggle = userDropdownToggle.cloneNode(true);
+      userDropdownToggle.parentNode.replaceChild(newToggle, userDropdownToggle);
+    }
+    
+    if (settingsMenuToggle && settingsMenuToggle.parentNode) {
+      const newToggle = settingsMenuToggle.cloneNode(true);
+      settingsMenuToggle.parentNode.replaceChild(newToggle, settingsMenuToggle);
+    }
+    
+    if (logoutBtn && logoutBtn.parentNode) {
+      const newBtn = logoutBtn.cloneNode(true);
+      logoutBtn.parentNode.replaceChild(newBtn, logoutBtn);
+    }
+    
+    if (deleteAllChatsBtn && deleteAllChatsBtn.parentNode) {
+      const newBtn = deleteAllChatsBtn.cloneNode(true);
+      deleteAllChatsBtn.parentNode.replaceChild(newBtn, deleteAllChatsBtn);
+    }
+    
+    if (settingsBtn && settingsBtn.parentNode) {
+      const newBtn = settingsBtn.cloneNode(true);
+      settingsBtn.parentNode.replaceChild(newBtn, settingsBtn);
+    }
+  },
+  
+  /**
+   * Configura i pulsanti nei dropdown
+   */
+  setupDropdownButtons: function() {
+    // Logout button
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        console.log('DEBUG: Logout button clicked');
+        if (typeof window.AuthManager?.logout === 'function') {
+          window.AuthManager.logout();
+        } else {
+          console.error('DEBUG: AuthManager.logout function not available');
+          // Fallback: clear local storage and reload
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
+          window.location.reload();
+        }
+      });
+      console.log('DEBUG: Logout button event listener added');
+    } else {
+      console.error('DEBUG: Logout button not found');
+    }
+    
+    // Delete all chats button
+    const deleteAllChatsBtn = document.getElementById('delete-all-chats-btn');
+    if (deleteAllChatsBtn) {
+      deleteAllChatsBtn.addEventListener('click', () => {
+        console.log('DEBUG: Delete all chats button clicked');
+        
+        // Usa il modale di conferma
+        if (window.ModalComponent) {
+          window.ModalComponent.showModal(
+            'Sei sicuro di voler eliminare tutte le chat? Questa azione non può essere annullata.',
+            () => {
+              this.deleteAllChats();
+            }
+          );
+        } else {
+          if (confirm('Sei sicuro di voler eliminare tutte le chat? Questa azione non può essere annullata.')) {
+            this.deleteAllChats();
+          }
+        }
+      });
+      console.log('DEBUG: Delete all chats button event listener added');
+    } else {
+      console.error('DEBUG: Delete all chats button not found');
+    }
+    
+    // Settings button
+    const settingsBtn = document.getElementById('settings-btn');
+    if (settingsBtn) {
+      settingsBtn.addEventListener('click', () => {
+        console.log('DEBUG: Settings button clicked');
+        alert('Impostazioni non ancora implementate. Funzionalità in arrivo!');
+      });
+      console.log('DEBUG: Settings button event listener added');
+    } else {
+      console.error('DEBUG: Settings button not found');
+    }
+    
+    // Aggiungi listener al document per chiudere i dropdown quando si clicca altrove
+    document.addEventListener('click', this.closeDropdownsOnClickOutside.bind(this));
+  },
+  
+  /**
+   * Chiude i dropdown quando si clicca altrove
+   */
+  closeDropdownsOnClickOutside: function(e) {
+    const userDropdownToggle = document.getElementById('user-dropdown-toggle');
+    const userDropdown = document.getElementById('user-dropdown');
+    const settingsMenuToggle = document.getElementById('settings-menu-toggle');
+    const settingsDropdown = document.getElementById('settings-dropdown');
+    
+    if (userDropdown && userDropdown.classList.contains('active') && 
+        userDropdownToggle && !userDropdownToggle.contains(e.target) && 
+        !userDropdown.contains(e.target)) {
+      userDropdown.classList.remove('active');
+    }
+    
+    if (settingsDropdown && settingsDropdown.classList.contains('active') && 
+        settingsMenuToggle && !settingsMenuToggle.contains(e.target) && 
+        !settingsDropdown.contains(e.target)) {
+      settingsDropdown.classList.remove('active');
+    }
+  },
+  
+  /**
+   * Elimina tutte le chat
+   */
+  deleteAllChats: function() {
+    console.log('DEBUG: Deleting all chats');
+    
+    try {
+      // Ottieni tutte le chat
+      const chats = window.StorageManager.getChats();
+      
+      if (Object.keys(chats).length === 0) {
+        console.log('DEBUG: No chats to delete');
+        alert('Non ci sono chat da eliminare.');
+        return;
+      }
+      
+      // Elimina tutte le chat
+      window.StorageManager.saveChats({});
+      
+      // Crea una nuova chat
+      if (typeof window.ChatCore?.createNewChat === 'function') {
+        window.ChatCore.createNewChat();
+      } else {
+        // Ricarica la pagina come fallback
+        window.location.reload();
+      }
+      
+      // Chiudi il dropdown
+      const settingsDropdown = document.getElementById('settings-dropdown');
+      if (settingsDropdown) {
+        settingsDropdown.classList.remove('active');
+      }
+      
+      console.log('DEBUG: All chats deleted successfully');
+    } catch (error) {
+      console.error('DEBUG: Error deleting all chats:', error);
+      alert('Si è verificato un errore durante l\'eliminazione delle chat. Ricarica la pagina e riprova.');
+    }
   },
   
   /**
@@ -293,5 +512,10 @@ window.addEventListener('load', function() {
   // Assicurati che la sidebar mobile sia configurata
   if (typeof window.SidebarComponent.setupMobileUI === 'function') {
     window.SidebarComponent.setupMobileUI();
+  }
+  
+  // Inizializza i dropdown menu
+  if (typeof window.SidebarComponent.setupDropdownMenus === 'function') {
+    window.SidebarComponent.setupDropdownMenus();
   }
 });

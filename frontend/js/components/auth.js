@@ -15,7 +15,8 @@ const AuthComponent = {
         formData: {
             login: {
                 email: '',
-                password: ''
+                password: '',
+                rememberMe: false
             },
             register: {
                 name: '',
@@ -158,6 +159,13 @@ const AuthComponent = {
                                     </button>
                                 </div>
                                 <div class="auth-error-message" id="login-password-error"></div>
+                            </div>
+                            
+                            <div class="auth-form-group remember-me-container">
+                                <label class="remember-me">
+                                    <input type="checkbox" id="remember-me" name="remember-me">
+                                    <span class="checkbox-label">Ricordami</span>
+                                </label>
                             </div>
                             
                             <div id="login-form-message"></div>
@@ -315,6 +323,7 @@ const AuthComponent = {
         // Input change handlers
         const loginEmail = document.getElementById('login-email');
         const loginPassword = document.getElementById('login-password');
+        const rememberMeCheckbox = document.getElementById('remember-me');
         const registerName = document.getElementById('register-name');
         const registerEmail = document.getElementById('register-email');
         const registerPassword = document.getElementById('register-password');
@@ -331,6 +340,12 @@ const AuthComponent = {
             loginPassword.addEventListener('input', (e) => {
                 this.state.formData.login.password = e.target.value;
                 this.clearError('login', 'password');
+            });
+        }
+        
+        if (rememberMeCheckbox) {
+            rememberMeCheckbox.addEventListener('change', (e) => {
+                this.state.formData.login.rememberMe = e.target.checked;
             });
         }
         
@@ -372,7 +387,7 @@ const AuthComponent = {
      * Gestisce l'invio del form di login
      */
     handleLogin: function() {
-        const { email, password } = this.state.formData.login;
+        const { email, password, rememberMe } = this.state.formData.login;
         
         // Validazione
         let isValid = true;
@@ -430,8 +445,16 @@ const AuthComponent = {
                 localStorage.setItem('user', JSON.stringify(data.user));
             }
             
+            // Salva la preferenza di rememberMe
+            localStorage.setItem('rememberMe', rememberMe.toString());
+            
             // Aggiorna lo stato
             this.state.isAuthenticated = true;
+            
+            // Usa l'AuthManager se disponibile
+            if (window.AuthManager && typeof window.AuthManager.handleLogin === 'function') {
+                window.AuthManager.handleLogin(data.user, data.accessToken, rememberMe);
+            }
             
             // Nascondi il popup dopo un breve ritardo
             setTimeout(() => {
