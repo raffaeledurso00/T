@@ -11,8 +11,6 @@ const linguisticPatch = require('./linguistic-patch');
 // Set DEBUG to true for detailed logging
 const DEBUG = true;
 
-// Modifiche da applicare a backend/src/services/mistral/MistralService.js
-
 class MistralService {
     constructor() {
         this.apiClient = new MistralApiClient();
@@ -28,38 +26,65 @@ class MistralService {
         try {
             console.log(`Processing message for session ${sessionId}: "${message}"`);
             
-            // Aggiungiamo debug FORZATO per il rilevamento lingua
-            console.log('\n====== INIZIO ANALISI MESSAGGIO UTENTE ======');
-            console.log(`[MistralService] Messaggio completo: "${message}"`);
-            console.log(`[MistralService] Controllo caratteri cirillici:`);
+            // Rileva la lingua dell'ultimo messaggio dell'utente
+            console.log(`\n====== ANALISI MESSAGGIO UTENTE ======`);  
+            console.log(`[MistralService] Messaggio utente: "${message}"`);          
             
-            // Test esplicito per cirillico con output completo
-            const cyrillicRegEx = /[\u0400-\u04FF]/;
-            const hasCyrillic = cyrillicRegEx.test(message);
-            console.log(`[MistralService] Test RegEx cirillico: ${hasCyrillic}`);
+            // Estrai i caratteri cirillici per verifica debug
+            let cyrillicChars = message.match(/[\u0400-\u04FF]/g) || [];
+            console.log(`[MistralService] Caratteri cirillici nel messaggio: ${cyrillicChars.length}`);
+            if (cyrillicChars.length > 0) {
+                console.log(`[MistralService] Caratteri cirillici: "${cyrillicChars.join('')}"`); 
+            }
             
-            // Verifica carattere per carattere
-            Array.from(message).forEach((char, index) => {
-                const code = char.charCodeAt(0);
-                const isCyrillic = (code >= 0x0400 && code <= 0x04FF);
-                console.log(`[MistralService] Char[${index}]: '${char}', Unicode: ${code}, Hex: 0x${code.toString(16)}, Cirillico: ${isCyrillic}`);
-            });
+            // Usa il patcher linguistico per verificare se è russo
+            const russianAnalysis = linguisticPatch.forceRussianDetection(message);
+            console.log(`[MistralService] Analisi russo: ${JSON.stringify(russianAnalysis)}`);
             
-            // Test con altre espressioni regolari
-            const alternativeRegex = /[А-Яа-я]/;
-            console.log(`[MistralService] Test alternativo cirillico [А-Яа-я]: ${alternativeRegex.test(message)}`);
-            
-            // Esegui il rilevamento della lingua con la patch per forzare russo
+            // Se è russo, forza l'impostazione della lingua
             let detectedLanguage;
-            if (hasCyrillic || alternativeRegex.test(message)) {
-                detectedLanguage = 'ru'; // Forza russo se ci sono caratteri cirillici
-                console.log(`[MistralService] Forzato rilevamento lingua: RUSSO (per presenza caratteri cirillici)`);
+            if (russianAnalysis.isRussian) {
+                detectedLanguage = 'ru';
+                console.log(`[MistralService] FORZATO RILEVAMENTO: RUSSO (per presenza caratteri cirillici)`);  
             } else {
+                // Altrimenti usa il normale rilevamento linguistico
                 detectedLanguage = this.languageDetector.detect(message);
             }
             
             console.log(`[MistralService] *********** LINGUA RILEVATA: ${detectedLanguage} ***********`);
             console.log('====== FINE ANALISI MESSAGGIO UTENTE ======\n');
+            
+            // SOLUZIONE RAPIDA PER IL RUSSO: Se la lingua è russa, ignora Mistral e usa una risposta predefinita
+            if (detectedLanguage === 'ru' && russianAnalysis.isRussian) {
+                console.log(`[MistralService] SOLUZIONE IMMEDIATA: Messaggio in russo rilevato, uso risposta predefinita`);
+                // Ottieni una risposta predefinita in russo
+                const russianResponse = linguisticPatch.getRussianFallbackResponse();
+                
+                // Salva nella storia della conversazione
+                const history = await this.conversationManager.getConversationHistory(sessionId);
+                
+                // Aggiungi il messaggio utente alla storia
+                history.push({
+                    role: 'user',
+                    content: message
+                });
+                
+                // Aggiungi la risposta russa predefinita
+                history.push({
+                    role: 'assistant',
+                    content: russianResponse
+                });
+                
+                // Aggiorna la storia
+                await this.conversationManager.updateConversationHistory(sessionId, history);
+                
+                return {
+                    message: russianResponse,
+                    sessionId: sessionId,
+                    source: 'russian-fallback',
+                    language: 'ru'
+                };
+            }
             
             // Gestione per richieste ristorante
             if (this.isRestaurantBookingRequest(message)) {
@@ -147,66 +172,62 @@ class MistralService {
             console.log(`[MistralService] Risposta originale da Mistral: "${assistantMessage}"`);
             console.log(`[MistralService] Lingua rilevata nel messaggio utente: ${detectedLanguage}`);
             
-            // Se è un saluto semplice, usa i template predefiniti nella lingua rilevata
-            if (this.messageDetection.isSimpleGreeting(message)) {
-                const originalResponse = assistantMessage;
-                assistantMessage = this.multiLanguageHandler.getRandomGreeting(detectedLanguage);
-                console.log(`[MistralService] Era un saluto semplice, sostituisco con greeting template`);
-                console.log(`[MistralService] PRIMA: "${originalResponse}"`);
-                console.log(`[MistralService] DOPO: "${assistantMessage}"`);
-            }
-            // Altrimenti, traduci la risposta se Mistral non ha rispettato la lingua rilevata
-            else {
-                // Possiamo provare a verificare se la lingua della risposta è quella rilevata
-                const responseLanguage = this.languageDetector.detect(assistantMessage);
-                console.log(`[MistralService] Lingua rilevata nella risposta Mistral: ${responseLanguage}`);
-                
-                // Test approfondito sulla risposta per verificare la correttezza linguistica
-                console.log('[MistralService] Analisi approfondita della risposta:');
-                
-                // Verifica caratteri specifici
-                const hasCyrillicResponse = /[\u0400-\u04FF]/.test(assistantMessage);
-                const hasChineseResponse = /[\u4e00-\u9fff]/.test(assistantMessage);
-                console.log(`[MistralService] - Contiene caratteri cirillici: ${hasCyrillicResponse}`);
-                console.log(`[MistralService] - Contiene caratteri cinesi: ${hasChineseResponse}`);
-                
-                // Verifica con il patcher linguistico
-                const isResponseCorrect = linguisticPatch.isResponseInCorrectLanguage(assistantMessage, detectedLanguage);
-                console.log(`[MistralService] - Qualità linguistica verificata: ${isResponseCorrect}`);
-                
-                // Per il russo specificamente, verifichiamo se è necessario forzare una risposta in russo
-                if (detectedLanguage === 'ru' && !hasCyrillicResponse) {
-                    console.log(`[MistralService] ATTENZIONE: La risposta NON contiene caratteri cirillici per una richiesta in russo`);
-                    
-                    // Ottieni un messaggio di errore in russo dal gestore multilingua
+            // Verifica la correttezza linguistica della risposta
+            try {
+                // Verifica se è un saluto semplice per usare template predefiniti
+                if (this.messageDetection.isSimpleGreeting(message)) {
                     const originalResponse = assistantMessage;
-                    assistantMessage = this.multiLanguageHandler.getErrorMessage('ru');
-                    console.log(`[MistralService] Sostituzione forzata con risposta fallback in russo:`);
-                    console.log(`[MistralService] PRIMA: "${originalResponse.substring(0, 100)}..."`);
+                    assistantMessage = this.multiLanguageHandler.getRandomGreeting(detectedLanguage);
+                    console.log(`[MistralService] Era un saluto semplice, sostituisco con greeting template`);
+                    console.log(`[MistralService] PRIMA: "${originalResponse}"`);
                     console.log(`[MistralService] DOPO: "${assistantMessage}"`);
-                }
-                // Gestione normale per altre lingue o quando la lingua rilevata non corrisponde
-                else if (responseLanguage !== detectedLanguage || !isResponseCorrect) {
-                    console.log(`[MistralService] ATTENZIONE: La lingua della risposta (${responseLanguage}) non corrisponde alla lingua dell'utente (${detectedLanguage})`);
+                } else {
+                    // Analisi approfondita della risposta per verificare la correttezza linguistica
+                    console.log('[MistralService] Analisi linguistica della risposta:');
                     
-                    // Verifico se è una risposta per un menu
-                    if (this.messageDetection.isAboutMenu(message)) {
-                        const originalResponse = assistantMessage;
-                        assistantMessage = this.multiLanguageHandler.localizeMenuSections(assistantMessage, detectedLanguage);
-                        console.log(`[MistralService] Localizzazione delle sezioni menu dopo fallback:`);
-                        console.log(`[MistralService] PRIMA: "${originalResponse.substring(0, 100)}..."`);
-                        console.log(`[MistralService] DOPO: "${assistantMessage.substring(0, 100)}..."`);
-                    }
+                    // Utilizza la funzione migliorata di linguisticPatch
+                    const isResponseCorrect = linguisticPatch.isResponseInCorrectLanguage(assistantMessage, detectedLanguage);
+                    console.log(`[MistralService] - Risposta nella lingua corretta: ${isResponseCorrect}`);
                     
-                    // Se continua a non rispettare la lingua, usa un messaggio di errore nella lingua corretta
-                    if (!linguisticPatch.isResponseInCorrectLanguage(assistantMessage, detectedLanguage)) {
-                        console.log(`[MistralService] *** PROBLEMATICO: La risposta è ancora nella lingua sbagliata, uso fallback ***`);
-                        const originalResponse = assistantMessage;
-                        assistantMessage = this.multiLanguageHandler.getErrorMessage(detectedLanguage);
-                        console.log(`[MistralService] PRIMA: "${originalResponse.substring(0, 100)}..."`);
-                        console.log(`[MistralService] DOPO: "${assistantMessage}"`);
+                    // Per il russo, implementiamo una soluzione speciale per garantire la risposta corretta
+                    if (detectedLanguage === 'ru') {
+                        const isResponseRussian = linguisticPatch.isResponseInCorrectLanguage(assistantMessage, 'ru');
+                        console.log(`[MistralService] Risposta in russo? ${isResponseRussian}`);
+                        
+                        if (!isResponseRussian) {
+                            console.log(`[MistralService] ERRORE: La risposta non è in russo. Sostituisco con risposta preimpostata.`);
+                            assistantMessage = linguisticPatch.getRussianFallbackResponse();
+                            console.log(`[MistralService] Risposta finale: "${assistantMessage}"`);
+                        }
+                    }
+                    // Se la risposta non è nella lingua corretta, usa il sistema avanzato di fallback
+                    else if (!isResponseCorrect) {
+                        console.log(`[MistralService] ATTENZIONE: La risposta non è nella lingua corretta: ${detectedLanguage}`);
+                        
+                        // Try-catch per gestire eventuali errori nel processo di traduzione
+                        try {
+                            const originalResponse = assistantMessage;
+                            // Usa il nuovo sistema di traduzione fallback
+                            assistantMessage = await linguisticPatch.translateWithFallback(assistantMessage, detectedLanguage);
+                            console.log(`[MistralService] Applicato fallback linguistico:`);
+                            console.log(`[MistralService] PRIMA: "${originalResponse.substring(0, 100)}..."`);
+                            console.log(`[MistralService] DOPO: "${assistantMessage.substring(0, 100)}..."`);
+                            
+                            // Verifica speciale per il menu
+                            if (this.messageDetection.isAboutMenu(message)) {
+                                assistantMessage = this.multiLanguageHandler.localizeMenuSections(assistantMessage, detectedLanguage);
+                                console.log(`[MistralService] Localizzazione aggiuntiva sezioni menu`);
+                            }
+                        } catch (translationError) {
+                            console.error(`[MistralService] Errore durante il fallback linguistico:`, translationError);
+                            // Fallback finale: usa un messaggio di errore predefinito nella lingua corretta
+                            assistantMessage = this.multiLanguageHandler.getErrorMessage(detectedLanguage);
+                        }
                     }
                 }
+            } catch (languageProcessingError) {
+                console.error('[MistralService] Errore durante l\'elaborazione linguistica:', languageProcessingError);
+                // Non interrompere il flusso, lascia la risposta originale
             }
             
             console.log(`====== FINE ANALISI RISPOSTA MISTRAL ======\n`);

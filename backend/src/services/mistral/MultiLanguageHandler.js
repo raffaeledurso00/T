@@ -99,23 +99,23 @@ class MultiLanguageHandler {
         
         // Template di errore per diverse lingue
         this.errorTemplates = {
-            it: "Mi scusi, si è verificato un errore. Potrebbe riprovare?",
-            en: "I'm sorry, an error occurred. Could you try again?",
-            fr: "Je suis désolé, une erreur s'est produite. Pourriez-vous réessayer?",
-            es: "Lo siento, ha ocurrido un error. ¿Podrías intentarlo de nuevo?",
-            de: "Es tut mir leid, ein Fehler ist aufgetreten. Könnten Sie es erneut versuchen?",
-            zh: "对不起，发生了错误。您能再试一次吗？",
-            ru: "Извините, произошла ошибка. Не могли бы вы попробовать еще раз? Пожалуйста, повторите ваш вопрос на русском языке.",
-            ja: "申し訳ありません、エラーが発生しました。もう一度お試しいただけますか？",
-            ko: "죄송합니다, 오류가 발생했습니다. 다시 시도해 주시겠어요?",
-            ar: "آسف، حدث خطأ. هل يمكنك المحاولة مرة أخرى؟",
-            pt: "Desculpe, ocorreu um erro. Poderia tentar novamente?",
-            nl: "Het spijt me, er is een fout opgetreden. Zou je het opnieuw kunnen proberen?",
-            hi: "क्षमा करें, एक त्रुटि हुई है। क्या आप फिर से प्रयास कर सकते हैं?",
-            tr: "Üzgünüm, bir hata oluştu. Tekrar deneyebilir misiniz?",
-            pl: "Przepraszam, wystąpił błąd. Czy możesz spróbować ponownie?",
-            sv: "Jag är ledsen, ett fel uppstod. Kan du försöka igen?",
-            th: "ขออภัย เกิดข้อผิดพลาด คุณช่วยลองอีกครั้งได้ไหม?"
+            it: "Mi scusi, al momento sto avendo problemi con la traduzione. Posso aiutarti in italiano?",
+            en: "I'm sorry, I'm currently having trouble with translation. How can I help you in English?",
+            fr: "Je suis désolé, j'ai actuellement des problèmes de traduction. Puis-je vous aider en français?",
+            es: "Lo siento, actualmente estoy teniendo problemas con la traducción. ¿Puedo ayudarte en español?",
+            de: "Es tut mir leid, ich habe derzeit Probleme mit der Übersetzung. Kann ich Ihnen auf Deutsch helfen?",
+            zh: "对不起，我目前在翻译方面遇到问题。我可以用中文帮助您吗？",
+            ru: "Извините, в настоящее время у меня проблемы с переводом. Могу ли я помочь вам на русском языке?",
+            ja: "申し訳ありませんが、現在翻訳に問題があります。日本語でお手伝いできますか？",
+            ko: "죄송합니다. 현재 번역에 문제가 있습니다. 한국어로 도와 드릴까요?",
+            ar: "أنا آسف، أواجه حاليًا مشكلة في الترجمة. هل يمكنني مساعدتك باللغة العربية؟",
+            pt: "Desculpe, estou tendo problemas com a tradução no momento. Posso ajudá-lo em português?",
+            nl: "Het spijt me, ik heb momenteel problemen met de vertaling. Kan ik u in het Nederlands helpen?",
+            hi: "क्षमा करें, मुझे वर्तमान में अनुवाद के साथ समस्या हो रही है। क्या मैं आपकी हिंदी में मदद कर सकता हूं?",
+            tr: "Üzgünüm, şu anda çeviri konusunda sorun yaşıyorum. Size Türkçe olarak yardımcı olabilir miyim?",
+            pl: "Przepraszam, mam obecnie problemy z tłumaczeniem. Czy mogę pomóc Ci po polsku?",
+            sv: "Jag är ledsen, jag har för närvarande problem med översättning. Kan jag hjälpa dig på svenska?",
+            th: "ขออภัย ฉันกำลังมีปัญหากับการแปลในขณะนี้ ฉันสามารถช่วยคุณเป็นภาษาไทยได้ไหม?"
         };
         
         // Sezioni menu per diverse lingue

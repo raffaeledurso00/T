@@ -1,4 +1,3 @@
-// backend/src/routes/mistralRoutes.js
 const express = require('express');
 const router = express.Router();
 const mistralController = require('../controllers/mistralController');
@@ -12,96 +11,53 @@ router.post('/message', (req, res) => {
 router.post('/clear-history', mistralController.clearHistory);
 router.post('/init', mistralController.initSession);
 
-// Debug route
-router.get('/status', (req, res) => {
+// Test endpoints for Mistral API
+router.post('/chat', mistralController.chat);
+router.post('/clear-history', mistralController.clearHistory);
+router.post('/init-session', mistralController.initSession);
+
+// Test endpoint that always returns a Russian response
+router.post('/test-russian', (req, res) => {
+    const russianResponses = [
+        "Привет! Я цифровой консьерж Виллы Петриоло. Чем я могу вам помочь?",
+        "Здравствуйте! Я здесь, чтобы помочь вам с любыми вопросами о нашей вилле.",
+        "Добро пожаловать! Как я могу сделать ваше пребывание более комфортным?"
+    ];
+    
+    const randomResponse = russianResponses[Math.floor(Math.random() * russianResponses.length)];
+    
     res.json({
-        status: 'ok',
-        service: 'Mistral AI',
-        mode: process.env.MISTRAL_API_KEY ? 'API' : 'Fallback',
-        timestamp: new Date().toISOString()
+        message: randomResponse,
+        sessionId: req.body.sessionId || 'test-session',
+        source: 'russian-test',
+        language: 'ru'
     });
 });
 
-// Language detection test route
-router.post('/test-language', (req, res) => {
-    try {
-        const { message } = req.body;
-        
-        console.log(`Test language endpoint received: "${message}" (${typeof message})`);
-        console.log(`Message length: ${message ? message.length : 0}`);
-        
-        if (!message) {
-            return res.status(400).json({
-                error: 'Message is required'
-            });
-        }
-        
-        const LanguageDetector = require('../services/mistral/LanguageDetector');
-        const detector = new LanguageDetector();
-        
-        // Basic debug info
-        const isChinese = /[\u4e00-\u9fff]/.test(message);
-        const isCyrillic = /[\u0400-\u04FF]/.test(message);
-        const isJapanese = /[\u3040-\u309F\u30A0-\u30FF]/.test(message);
-        
-        // Detect language
-        const detectedLanguage = detector.detect(message);
-        
-        res.json({
-            message,
-            messageBase64: Buffer.from(message).toString('base64'),
-            firstCharCode: message.charCodeAt(0),
-            firstChar: message[0],
-            isChinese,
-            isCyrillic,
-            isJapanese,
-            detectedLanguage,
-            timestamp: new Date().toISOString()
-        });
-    } catch (error) {
-        console.error('Error in test-language endpoint:', error);
-        res.status(500).json({
-            error: 'Error testing language detection',
-            details: error.message
-        });
-    }
-});
-
-// Direct test for Cyrillic characters
-router.get('/test-cyrillic', (req, res) => {
-    const textToTest = req.query.text || 'ПРИВЕТ';
+// Test endpoint for multilingual testing - simple endpoint for all languages
+router.post('/test-language/:lang', (req, res) => {
+    const lang = req.params.lang.toLowerCase();
     
-    console.log(`Testing for Cyrillic: "${textToTest}"`);
-    console.log(`Text length: ${textToTest.length}`);
+    // Simple responses in various languages
+    const langResponses = {
+        it: "Ciao! Sono il concierge digitale di Villa Petriolo. Come posso aiutarti oggi?",
+        en: "Hello! I'm the digital concierge of Villa Petriolo. How can I help you today?",
+        ru: "Привет! Я цифровой консьерж Виллы Петриоло. Чем я могу вам помочь сегодня?",
+        fr: "Bonjour! Je suis le concierge numérique de Villa Petriolo. Comment puis-je vous aider aujourd'hui?",
+        es: "¡Hola! Soy el conserje digital de Villa Petriolo. ¿Cómo puedo ayudarte hoy?",
+        de: "Hallo! Ich bin der digitale Concierge der Villa Petriolo. Wie kann ich Ihnen heute helfen?",
+        zh: "你好！我是威拉·佩特里奥洛的数字管家。今天我能帮您什么忙？",
+        ja: "こんにちは！私はヴィラ・ペトリオーロのデジタルコンシェルジュです。今日はどのようにお手伝いできますか？"
+    };
     
-    // Analyze each character
-    const charAnalysis = [];
-    for (let i = 0; i < textToTest.length; i++) {
-        const char = textToTest[i];
-        const code = char.charCodeAt(0);
-        const isInCyrillicRange = code >= 0x0400 && code <= 0x04FF;
-        
-        charAnalysis.push({
-            char,
-            code, 
-            hex: `0x${code.toString(16)}`,
-            isCyrillic: isInCyrillicRange
-        });
-    }
-    
-    // Test regex for Cyrillic
-    const containsCyrillic = /[\u0400-\u04FF]/.test(textToTest);
-    const cyrillicMatches = textToTest.match(/[\u0400-\u04FF]/g);
+    // Default to Italian if the language is not supported
+    const response = langResponses[lang] || langResponses.it;
     
     res.json({
-        text: textToTest,
-        length: textToTest.length,
-        characters: charAnalysis,
-        containsCyrillic,
-        cyrillicMatches: cyrillicMatches ? cyrillicMatches.join('') : null,
-        cyrillicMatchCount: cyrillicMatches ? cyrillicMatches.length : 0,
-        textBase64: Buffer.from(textToTest).toString('base64'),
-        timestamp: new Date().toISOString()
+        message: response,
+        sessionId: req.body.sessionId || 'test-session',
+        source: 'language-test',
+        language: lang
     });
 });
 

@@ -130,7 +130,9 @@ class MistralApiClient {
                         content: `Rispondi all'utente in lingua ${detectedLanguage}. Respond in the ${detectedLanguage} language. 回复用${detectedLanguage}语言。Отвечай на языке ${detectedLanguage}.`
                     });
                     
-                    // Prepare options for the API call
+                    // Prepara le istruzioni da inviare all'AI per garantire risposte multilingua corrette
+                    let languageInstructions = [];
+                    
                     // Mappa dei nomi completi delle lingue per istruzioni più chiare a Mistral
                     const languageNames = {
                         it: "italiano",
@@ -152,30 +154,73 @@ class MistralApiClient {
                         th: "ไทย"
                     };
                     
-                    // Aggiorna l'istruzione con il nome completo della lingua
-                    const languageInstruction = `IMPORTANTE: Rispondi all'utente SOLO in lingua ${languageNames[detectedLanguage] || detectedLanguage}. ` + 
+                    // Istruzione base in multilingua (aggiunta come primo messaggio di sistema)
+                    const baseInstruction = `IMPORTANTE: Rispondi all'utente SOLO in lingua ${languageNames[detectedLanguage] || detectedLanguage}. ` + 
                         `IMPORTANT: Respond to the user ONLY in ${languageNames[detectedLanguage] || detectedLanguage} language. ` +
                         `ЗАПРЕЩЕНО отвечать на любом языке, кроме ${languageNames[detectedLanguage] || detectedLanguage}. ` +
                         `必须只使用${languageNames[detectedLanguage] || detectedLanguage}语言回复。`;
                     
-                    console.log(`[MistralApiClient] Istruzione lingua inviata a Mistral: "${languageInstruction}"`);
-                    messagesForAPI[messagesForAPI.length - 1].content = languageInstruction;
+                    console.log(`[MistralApiClient] Istruzione base lingua: "${baseInstruction}"`);
+                    languageInstructions.push({
+                        role: 'system', 
+                        content: baseInstruction
+                    });
                     
-                    // Istruzioni extra potenziate per specifiche lingue
-                    if (detectedLanguage === 'ru') {
-                        // Istruzioni extra esplicite per il russo
-                        const russianInstruction = `
-                        ОЧЕНЬ ВАЖНО: Вы ДОЛЖНЫ отвечать ТОЛЬКО на русском языке.
-                        ВАЖНО: Все ответы должны быть ТОЛЬКО на русском языке, это абсолютное требование.
-                        ЗАПРЕЩЕНО: Отвечать на любом языке кроме русского.
-                        СТРОГОЕ ТРЕБОВАНИЕ: Использовать ТОЛЬКО русский язык в ответах.
-                        `;
-                        messagesForAPI.push({
-                            role: 'system',
-                            content: russianInstruction
-                        });
-                        console.log(`[MistralApiClient] Aggiunta istruzione rafforzata per russo`);
+                    // Istruzioni specifiche per lingua (aggiunta come secondo messaggio di sistema)
+                    switch(detectedLanguage) {
+                        case 'ru':
+                            languageInstructions.push({
+                                role: 'system',
+                                content: `
+                                ОЧЕНЬ ВАЖНО: Вы ДОЛЖНЫ отвечать ТОЛЬКО на русском языке.
+                                ВАЖНО: Все ответы должны быть ТОЛЬКО на русском языке, это абсолютное требование.
+                                ЗАПРЕЩЕНО: Отвечать на любом языке кроме русского.
+                                СТРОГОЕ ТРЕБОВАНИЕ: Использовать ТОЛЬКО русский язык в ответах.
+                                `
+                            });
+                            break;
+                        case 'zh':
+                            languageInstructions.push({
+                                role: 'system',
+                                content: `
+                                非常重要: 你必须只使用中文回答。
+                                禁止: 使用任何其他语言回答问题。
+                                严格要求: 所有回答必须只用中文。
+                                `
+                            });
+                            break;
+                        case 'ar':
+                            languageInstructions.push({
+                                role: 'system',
+                                content: `
+                                مهم جدا: يجب عليك الرد باللغة العربية فقط.
+                                ممنوع: الرد بأي لغة أخرى غير العربية.
+                                `
+                            });
+                            break;
+                        case 'ja':
+                            languageInstructions.push({
+                                role: 'system',
+                                content: `
+                                重要: 必ず日本語だけで返信してください。
+                                禁止: 日本語以外の言語で返信すること。
+                                `
+                            });
+                            break;
+                        case 'ko':
+                            languageInstructions.push({
+                                role: 'system',
+                                content: `
+                                중요: 반드시 한국어로만 대답해야 합니다.
+                                금지: 한국어 이외의 다른 언어로 대답하는 것.
+                                `
+                            });
+                            break;
                     }
+                    
+                    // Aggiungi le istruzioni sulla lingua ai messaggi per l'API
+                    messagesForAPI = [...messagesForAPI, ...languageInstructions];
+                    console.log(`[MistralApiClient] Aggiunte ${languageInstructions.length} istruzioni lingua`);
                     
                     // Configurazione ottimizzata per specifiche lingue
                     let temperature = 0.7;
