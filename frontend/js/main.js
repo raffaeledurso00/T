@@ -49,12 +49,17 @@
                 'js/utils/formatter/generic-formatter.js',
                 'js/utils/formatter/index.js',
                 'js/utils/context.js',
-                'js/utils/dom.js'
+                'js/utils/dom.js',
+                'js/utils/api/paths.js'
             ]
         },
         {
             name: 'api',
-            files: ['js/api/chat.js']
+            files: [
+                'js/api/chat.js',
+                'js/api/polling.js',
+                'js/api/latest-message.js'
+            ]
         },
         {
             name: 'components',

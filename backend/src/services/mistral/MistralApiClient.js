@@ -94,15 +94,18 @@ class MistralApiClient {
                     // per evitare risposte formattate non necessarie
                     let messagesForAPI = [...messages];
                     if (isGreeting) {
-                        // Aggiungi un messaggio di sistema temporaneo per guidare la risposta
-                        messagesForAPI.push({
-                            role: 'system',
-                            content: 'Il messaggio dell\'utente è un semplice saluto. ' +
-                                    'Rispondi in modo breve e conversazionale, con 1-2 frasi al massimo. ' +
-                                    'Sii amichevole ma conciso. Non usare formattazioni speciali. ' +
-                                    'Non usare le sezioni ANTIPASTI, PRIMI, SECONDI, DOLCI, INTERNE, ESTERNE, ESCURSIONI, ' +
-                                    'SPECIALI, SETTIMANALI, STAGIONALI o altre formattazioni.'
-                        });
+                        // Aggiungi un messaggio di sistema temporaneo molto chiaro per guidare la risposta
+                        messagesForAPI = [
+                            {
+                                role: 'system',
+                                content: 'Sei il concierge digitale di Villa Petriolo. L\'utente ti ha inviato un saluto. ' +
+                                        'Rispondi SOLO con una frase di benvenuto molto breve (max 15-20 parole), ' +
+                                        'cordiale ma concisa. NON fornire dettagli sui servizi, orari, o attività disponibili ' +
+                                        'a meno che non siano esplicitamente richiesti.'
+                            },
+                            // Mantieni solo l'ultimo messaggio dell'utente per i saluti
+                            messages[messages.length - 1]
+                        ];
                     } else if (needsFormat && messageDetection.isAboutMenu(userMessageText)) {
                         // Per domande sul menu, assicurati che includa i prezzi
                         messagesForAPI.push({

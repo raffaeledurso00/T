@@ -8,10 +8,8 @@ const ChatAPI = {
    */
   initializeSession: async function() {
     try {
-      // Log the initialization URL
-      const initUrl = window.appConfig.BACKEND_URL.endsWith('/api') 
-        ? `${window.appConfig.BACKEND_URL}/chat/init` 
-        : `${window.appConfig.BACKEND_URL}/api/chat/init`;
+      // Log the initialization URL - FIXME: Sempre usare /api/chat/
+      const initUrl = `${window.appConfig.BACKEND_URL}/api/chat/init`;
       
       console.log('Initializing session with URL:', initUrl);
       
@@ -66,9 +64,9 @@ const ChatAPI = {
 
         // Add request timeout
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-        // Determine the correct API URL using the config
+        // FIXME: Cambiato forzatamente ad usare /api/chat/message invece di /chat/message
         const apiUrl = `${window.appConfig.BACKEND_URL}/api/chat/message`;
         
         // Prepare payload with minimal data to avoid issues
@@ -143,7 +141,7 @@ const ChatAPI = {
         return { success: false, message: 'No session to clear' };
       }
       
-      // Use the config URL
+      // FIXME: Sempre usare /api/chat/
       const apiUrl = `${window.appConfig.BACKEND_URL}/api/chat/clear-history`;
       
       console.log('Clearing history with URL:', apiUrl);
@@ -186,7 +184,7 @@ const ChatAPI = {
         return [];
       }
       
-      // Use the config URL
+      // FIXME: Sempre usare /api/chat/
       const apiUrl = `${window.appConfig.BACKEND_URL}/api/chat/history/${sessionId}`;
       
       console.log('Getting history with URL:', apiUrl);
@@ -232,7 +230,7 @@ const ChatAPI = {
         
         if (response.ok) {
           const data = await response.json();
-          console.log('Connection test result (GET):', data);
+          console.log('Connection test result:', data);
           return true;
         }
       } catch (getError) {
@@ -252,7 +250,7 @@ const ChatAPI = {
         
         if (postResponse.ok) {
           const data = await postResponse.json();
-          console.log('Connection test result (POST):', data);
+          console.log('Connection test result:', data);
           return true;
         }
       } catch (postError) {
@@ -272,7 +270,7 @@ const ChatAPI = {
         
         if (phpResponse.ok) {
           const data = await phpResponse.json();
-          console.log('Connection test result (PHP):', data);
+          console.log('Connection test result:', data);
           return true;
         }
       } catch (phpError) {

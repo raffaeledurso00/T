@@ -3,15 +3,20 @@
 class MessageDetectionUtils {
     // Verifica se il messaggio dell'utente è un saluto semplice
     isSimpleGreeting(message) {
+        if (!message || typeof message !== 'string') return false;
+        
         const simpleGreetings = ['ciao', 'buongiorno', 'buonasera', 'salve', 'hey', 'hi', 'hello', 'hola'];
         const normalizedMessage = message.toLowerCase().trim();
         
+        // Rimuovi punteggiatura, emoticon e caratteri speciali per un confronto più accurato
+        const cleanedMessage = normalizedMessage.replace(/[.,!?;:'"+\-_=(){}\[\]\/*&^%$#@~`|<>\d]+/g, '').trim();
+        
         // Controlla se il messaggio è un saluto semplice o un saluto con 1-2 parole aggiuntive
         return simpleGreetings.some(greeting => 
-            normalizedMessage === greeting || 
-            normalizedMessage.startsWith(greeting + ' ') || 
-            normalizedMessage.endsWith(' ' + greeting)
-        ) && normalizedMessage.split(/\s+/).length <= 3;
+            cleanedMessage === greeting || 
+            cleanedMessage.startsWith(greeting + ' ') || 
+            cleanedMessage.endsWith(' ' + greeting)
+        ) && cleanedMessage.split(/\s+/).length <= 3;
     }
 
     // Verifica se il messaggio dell'utente richiede una risposta formattata

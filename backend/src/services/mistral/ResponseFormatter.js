@@ -11,19 +11,16 @@ class ResponseFormatter {
     // Post-process per evitare risposte troppo lunghe ai saluti
     shortenGreetingResponse(response, message) {
         if (this.messageDetection.isSimpleGreeting(message)) {
-            // Trova la prima frase completa (fino al punto)
-            const firstSentence = response.split('.')[0] + '.';
+            // Risposta molto breve per saluti semplici
+            const greetingResponses = [
+                "Ciao! Come posso aiutarti con Villa Petriolo?",
+                "Buongiorno! Sono il concierge digitale di Villa Petriolo. Come posso esserti utile oggi?",
+                "Salve! Sono qui per aiutarti con qualsiasi informazione su Villa Petriolo. Cosa ti serve?",
+                "Benvenuto! In cosa posso esserti utile oggi?"
+            ];
             
-            // Se la prima frase è abbastanza breve, usala
-            if (firstSentence.length <= 150) {
-                return firstSentence;
-            }
-            
-            // Altrimenti tronca a una lunghezza ragionevole
-            const shortenedResponse = response.substring(0, 100);
-            // Assicurati che termini con una parola completa
-            const lastSpaceIndex = shortenedResponse.lastIndexOf(' ');
-            return shortenedResponse.substring(0, lastSpaceIndex) + '...';
+            // Seleziona una risposta casuale dall'array
+            return greetingResponses[Math.floor(Math.random() * greetingResponses.length)];
         }
         
         return response;

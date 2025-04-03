@@ -56,6 +56,14 @@ app.use(morgan('dev'));
 app.use('/api/chat', chatRoutes);
 app.use('/api/auth', authRoutes);
 
+// Reindirizzamenti per retrocompatibilità
+app.all('/chat/*', (req, res) => {
+  console.log(`[REDIRECT] ${req.method} ${req.path} -> /api${req.path}`);
+  // Ricostruisci l'URL completa con eventuali parametri query
+  const redirectUrl = `/api${req.path}${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`;
+  res.redirect(307, redirectUrl); // 307 mantiene il metodo HTTP originale
+});
+
 // Health check endpoints for ping
 app.get('/ping', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'Server is running' });
@@ -63,6 +71,31 @@ app.get('/ping', (req, res) => {
 
 app.post('/ping', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'Server is running' });
+});
+
+// Endpoint per recuperare l'ultimo messaggio di una chat (usato per polling)
+app.get('/api/chat/messages/latest/:sessionId', async (req, res) => {
+    try {
+        const sessionId = req.params.sessionId;
+        
+        if (!sessionId) {
+            return res.status(400).json({ error: 'Session ID richiesto' });
+        }
+        
+        // Simulazione di risposta nel caso in cui il servizio di chat non sia disponibile
+        res.json({ 
+            message: {
+                role: 'assistant',
+                content: 'La risposta è in fase di elaborazione. Si prega di attendere o riprovare.'
+            }
+        });
+    } catch (error) {
+        console.error('Errore nel recupero dell\'ultimo messaggio:', error);
+        res.status(500).json({ 
+            error: 'Internal Server Error',
+            message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+        });
+    }
 });
 
 // Diagnostics endpoint
