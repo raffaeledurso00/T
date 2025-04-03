@@ -4,9 +4,12 @@ const ConversationManager = require('./ConversationManager');
 const MessageDetectionUtils = require('./MessageDetectionUtils');
 const ResponseFormatter = require('./ResponseFormatter');
 const BookingIntegration = require('./BookingIntegration');
+const LanguageDetector = require('./LanguageDetector');
+const MultiLanguageHandler = require('./MultiLanguageHandler');
+const linguisticPatch = require('./linguistic-patch');
 
 // Set DEBUG to true for detailed logging
-const DEBUG = false;
+const DEBUG = true;
 
 // Modifiche da applicare a backend/src/services/mistral/MistralService.js
 
@@ -17,11 +20,46 @@ class MistralService {
         this.messageDetection = new MessageDetectionUtils();
         this.responseFormatter = new ResponseFormatter();
         this.bookingIntegration = BookingIntegration;
+        this.languageDetector = new LanguageDetector();
+        this.multiLanguageHandler = new MultiLanguageHandler();
     }
 
     async processMessage(message, sessionId, userId = null) {
         try {
-            if (DEBUG) console.log(`Processing message for session ${sessionId}: "${message}"`);
+            console.log(`Processing message for session ${sessionId}: "${message}"`);
+            
+            // Aggiungiamo debug FORZATO per il rilevamento lingua
+            console.log('\n====== INIZIO ANALISI MESSAGGIO UTENTE ======');
+            console.log(`[MistralService] Messaggio completo: "${message}"`);
+            console.log(`[MistralService] Controllo caratteri cirillici:`);
+            
+            // Test esplicito per cirillico con output completo
+            const cyrillicRegEx = /[\u0400-\u04FF]/;
+            const hasCyrillic = cyrillicRegEx.test(message);
+            console.log(`[MistralService] Test RegEx cirillico: ${hasCyrillic}`);
+            
+            // Verifica carattere per carattere
+            Array.from(message).forEach((char, index) => {
+                const code = char.charCodeAt(0);
+                const isCyrillic = (code >= 0x0400 && code <= 0x04FF);
+                console.log(`[MistralService] Char[${index}]: '${char}', Unicode: ${code}, Hex: 0x${code.toString(16)}, Cirillico: ${isCyrillic}`);
+            });
+            
+            // Test con altre espressioni regolari
+            const alternativeRegex = /[А-Яа-я]/;
+            console.log(`[MistralService] Test alternativo cirillico [А-Яа-я]: ${alternativeRegex.test(message)}`);
+            
+            // Esegui il rilevamento della lingua con la patch per forzare russo
+            let detectedLanguage;
+            if (hasCyrillic || alternativeRegex.test(message)) {
+                detectedLanguage = 'ru'; // Forza russo se ci sono caratteri cirillici
+                console.log(`[MistralService] Forzato rilevamento lingua: RUSSO (per presenza caratteri cirillici)`);
+            } else {
+                detectedLanguage = this.languageDetector.detect(message);
+            }
+            
+            console.log(`[MistralService] *********** LINGUA RILEVATA: ${detectedLanguage} ***********`);
+            console.log('====== FINE ANALISI MESSAGGIO UTENTE ======\n');
             
             // Gestione per richieste ristorante
             if (this.isRestaurantBookingRequest(message)) {
@@ -48,7 +86,8 @@ class MistralService {
                 return {
                     message: restaurantResponse,
                     sessionId: sessionId,
-                    source: 'restaurant-system'
+                    source: 'restaurant-system',
+                    language: detectedLanguage
                 };
             }
             
@@ -79,7 +118,8 @@ class MistralService {
                     return {
                         message: bookingResponse,
                         sessionId: sessionId,
-                        source: 'booking-system'
+                        source: 'booking-system',
+                        language: detectedLanguage
                     };
                 }
             }
@@ -98,9 +138,78 @@ class MistralService {
             
             // Get response from API
             const response = await this.apiClient.callMistralAPI(history, message, this.messageDetection, this.responseFormatter);
-            const assistantMessage = response.content;
+            let assistantMessage = response.content;
             
             if (DEBUG) console.log(`Got assistant response: "${assistantMessage}"`);
+            
+            // Check if the language of the response matches the detected language of the user message
+            console.log(`\n====== ANALISI RISPOSTA MISTRAL ======`);
+            console.log(`[MistralService] Risposta originale da Mistral: "${assistantMessage}"`);
+            console.log(`[MistralService] Lingua rilevata nel messaggio utente: ${detectedLanguage}`);
+            
+            // Se è un saluto semplice, usa i template predefiniti nella lingua rilevata
+            if (this.messageDetection.isSimpleGreeting(message)) {
+                const originalResponse = assistantMessage;
+                assistantMessage = this.multiLanguageHandler.getRandomGreeting(detectedLanguage);
+                console.log(`[MistralService] Era un saluto semplice, sostituisco con greeting template`);
+                console.log(`[MistralService] PRIMA: "${originalResponse}"`);
+                console.log(`[MistralService] DOPO: "${assistantMessage}"`);
+            }
+            // Altrimenti, traduci la risposta se Mistral non ha rispettato la lingua rilevata
+            else {
+                // Possiamo provare a verificare se la lingua della risposta è quella rilevata
+                const responseLanguage = this.languageDetector.detect(assistantMessage);
+                console.log(`[MistralService] Lingua rilevata nella risposta Mistral: ${responseLanguage}`);
+                
+                // Test approfondito sulla risposta per verificare la correttezza linguistica
+                console.log('[MistralService] Analisi approfondita della risposta:');
+                
+                // Verifica caratteri specifici
+                const hasCyrillicResponse = /[\u0400-\u04FF]/.test(assistantMessage);
+                const hasChineseResponse = /[\u4e00-\u9fff]/.test(assistantMessage);
+                console.log(`[MistralService] - Contiene caratteri cirillici: ${hasCyrillicResponse}`);
+                console.log(`[MistralService] - Contiene caratteri cinesi: ${hasChineseResponse}`);
+                
+                // Verifica con il patcher linguistico
+                const isResponseCorrect = linguisticPatch.isResponseInCorrectLanguage(assistantMessage, detectedLanguage);
+                console.log(`[MistralService] - Qualità linguistica verificata: ${isResponseCorrect}`);
+                
+                // Per il russo specificamente, verifichiamo se è necessario forzare una risposta in russo
+                if (detectedLanguage === 'ru' && !hasCyrillicResponse) {
+                    console.log(`[MistralService] ATTENZIONE: La risposta NON contiene caratteri cirillici per una richiesta in russo`);
+                    
+                    // Ottieni un messaggio di errore in russo dal gestore multilingua
+                    const originalResponse = assistantMessage;
+                    assistantMessage = this.multiLanguageHandler.getErrorMessage('ru');
+                    console.log(`[MistralService] Sostituzione forzata con risposta fallback in russo:`);
+                    console.log(`[MistralService] PRIMA: "${originalResponse.substring(0, 100)}..."`);
+                    console.log(`[MistralService] DOPO: "${assistantMessage}"`);
+                }
+                // Gestione normale per altre lingue o quando la lingua rilevata non corrisponde
+                else if (responseLanguage !== detectedLanguage || !isResponseCorrect) {
+                    console.log(`[MistralService] ATTENZIONE: La lingua della risposta (${responseLanguage}) non corrisponde alla lingua dell'utente (${detectedLanguage})`);
+                    
+                    // Verifico se è una risposta per un menu
+                    if (this.messageDetection.isAboutMenu(message)) {
+                        const originalResponse = assistantMessage;
+                        assistantMessage = this.multiLanguageHandler.localizeMenuSections(assistantMessage, detectedLanguage);
+                        console.log(`[MistralService] Localizzazione delle sezioni menu dopo fallback:`);
+                        console.log(`[MistralService] PRIMA: "${originalResponse.substring(0, 100)}..."`);
+                        console.log(`[MistralService] DOPO: "${assistantMessage.substring(0, 100)}..."`);
+                    }
+                    
+                    // Se continua a non rispettare la lingua, usa un messaggio di errore nella lingua corretta
+                    if (!linguisticPatch.isResponseInCorrectLanguage(assistantMessage, detectedLanguage)) {
+                        console.log(`[MistralService] *** PROBLEMATICO: La risposta è ancora nella lingua sbagliata, uso fallback ***`);
+                        const originalResponse = assistantMessage;
+                        assistantMessage = this.multiLanguageHandler.getErrorMessage(detectedLanguage);
+                        console.log(`[MistralService] PRIMA: "${originalResponse.substring(0, 100)}..."`);
+                        console.log(`[MistralService] DOPO: "${assistantMessage}"`);
+                    }
+                }
+            }
+            
+            console.log(`====== FINE ANALISI RISPOSTA MISTRAL ======\n`);
             
             // Add assistant response to history
             history.push({
@@ -114,7 +223,8 @@ class MistralService {
             return {
                 message: assistantMessage,
                 sessionId: sessionId,
-                source: 'mistral-ai'
+                source: 'mistral-ai',
+                language: detectedLanguage
             };
         } catch (error) {
             console.error('Error processing message:', error);
@@ -124,7 +234,8 @@ class MistralService {
                 message: "Mi scusi, si è verificato un errore nella comunicazione. Può riprovare tra qualche istante?",
                 sessionId: sessionId,
                 error: true,
-                source: 'error-handler'
+                source: 'error-handler',
+                language: detectedLanguage || 'it'
             };
         }
     }

@@ -21,7 +21,12 @@ class MistralController {
                 });
             }
     
-            console.log(`Processing message: "${message}" for session ${sessionId}`);
+            console.log(`Controller riceve messaggio: "${message}" (lunghezza: ${message.length})`);
+            console.log(`Primo carattere Unicode: ${message.charCodeAt(0)} (${message[0]})`);
+            console.log(`Messaggi formattato Base64 per debug: ${Buffer.from(message).toString('base64')}`);
+            
+            // Test cirillico
+            console.log(`Test cirillico nel controller: ${/[\u0400-\u04FF]/.test(message)}`);
             
             const response = await mistralService.processMessage(message, sessionId);
             console.log(`Response generated for session ${sessionId}`);

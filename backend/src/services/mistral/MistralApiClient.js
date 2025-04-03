@@ -1,7 +1,9 @@
 // src/services/mistral/MistralApiClient.js
+const LanguageDetector = require('./LanguageDetector');
+const MultiLanguageHandler = require('./MultiLanguageHandler');
 
 // Set DEBUG to true for detailed logging
-const DEBUG = false;
+const DEBUG = true;
 
 // Cache for the Mistral module to avoid multiple imports
 let mistralModule;
@@ -12,6 +14,8 @@ class MistralApiClient {
         this.client = null;
         this.isFallbackMode = false;
         this.apiKey = process.env.MISTRAL_API_KEY;
+        this.languageDetector = new LanguageDetector();
+        this.multiLanguageHandler = new MultiLanguageHandler();
         
         // Initialize client asynchronously to avoid startup errors
         this._initializeMistralClient().catch(err => {
@@ -116,12 +120,78 @@ class MistralApiClient {
                         });
                     }
                     
+                    // Rileva la lingua dell'ultimo messaggio dell'utente
+                    const detectedLanguage = this.languageDetector.detect(userMessageText);
+                    console.log(`[MistralApiClient] Lingua rilevata per la richiesta: ${detectedLanguage}`);
+                    
+                    // Aggiungi istruzione specifica per rispondere nella lingua rilevata
+                    messagesForAPI.push({
+                        role: 'system',
+                        content: `Rispondi all'utente in lingua ${detectedLanguage}. Respond in the ${detectedLanguage} language. 回复用${detectedLanguage}语言。Отвечай на языке ${detectedLanguage}.`
+                    });
+                    
                     // Prepare options for the API call
+                    // Mappa dei nomi completi delle lingue per istruzioni più chiare a Mistral
+                    const languageNames = {
+                        it: "italiano",
+                        en: "English",
+                        fr: "Français",
+                        es: "Español",
+                        de: "Deutsch",
+                        zh: "中文",
+                        ru: "Русский",
+                        ja: "日本語",
+                        ko: "한국어",
+                        ar: "العربية",
+                        pt: "Português",
+                        nl: "Nederlands",
+                        hi: "हिन्दी",
+                        tr: "Türkçe",
+                        pl: "Polski",
+                        sv: "Svenska",
+                        th: "ไทย"
+                    };
+                    
+                    // Aggiorna l'istruzione con il nome completo della lingua
+                    const languageInstruction = `IMPORTANTE: Rispondi all'utente SOLO in lingua ${languageNames[detectedLanguage] || detectedLanguage}. ` + 
+                        `IMPORTANT: Respond to the user ONLY in ${languageNames[detectedLanguage] || detectedLanguage} language. ` +
+                        `ЗАПРЕЩЕНО отвечать на любом языке, кроме ${languageNames[detectedLanguage] || detectedLanguage}. ` +
+                        `必须只使用${languageNames[detectedLanguage] || detectedLanguage}语言回复。`;
+                    
+                    console.log(`[MistralApiClient] Istruzione lingua inviata a Mistral: "${languageInstruction}"`);
+                    messagesForAPI[messagesForAPI.length - 1].content = languageInstruction;
+                    
+                    // Istruzioni extra potenziate per specifiche lingue
+                    if (detectedLanguage === 'ru') {
+                        // Istruzioni extra esplicite per il russo
+                        const russianInstruction = `
+                        ОЧЕНЬ ВАЖНО: Вы ДОЛЖНЫ отвечать ТОЛЬКО на русском языке.
+                        ВАЖНО: Все ответы должны быть ТОЛЬКО на русском языке, это абсолютное требование.
+                        ЗАПРЕЩЕНО: Отвечать на любом языке кроме русского.
+                        СТРОГОЕ ТРЕБОВАНИЕ: Использовать ТОЛЬКО русский язык в ответах.
+                        `;
+                        messagesForAPI.push({
+                            role: 'system',
+                            content: russianInstruction
+                        });
+                        console.log(`[MistralApiClient] Aggiunta istruzione rafforzata per russo`);
+                    }
+                    
+                    // Configurazione ottimizzata per specifiche lingue
+                    let temperature = 0.7;
+                    let maxTokens = 1000;
+                    
+                    // Per il russo abbassiamo la temperatura per risposte più deterministiche
+                    if (detectedLanguage === 'ru') {
+                        temperature = 0.2; // Temperatura molto più bassa per risposte più prevedibili
+                        console.log(`[MistralApiClient] Temperatura ottimizzata per russo: ${temperature}`);
+                    }
+                    
                     const options = {
                         model: 'mistral-tiny',  // You can change the model as needed
                         messages: messagesForAPI,
-                        temperature: 0.7,
-                        maxTokens: 1000
+                        temperature: temperature,
+                        maxTokens: maxTokens
                     };
                     
                     // Call the API with proper error handling
@@ -140,7 +210,12 @@ class MistralApiClient {
                         
                         // Se è un saluto, accorcia la risposta
                         if (isGreeting) {
-                            processedContent = responseFormatter.shortenGreetingResponse(processedContent, userMessageText);
+                            // Se è un saluto semplice, gestisci con il formatter
+                            if (messageDetection.isSimpleGreeting(userMessageText)) {
+                                processedContent = responseFormatter.shortenGreetingResponse(processedContent, userMessageText);
+                            } else {
+                                processedContent = responseFormatter.shortenGreetingResponse(processedContent, userMessageText);
+                            }
                         } 
                         // Se è una richiesta di menu, assicurati che includa i prezzi
                         else if (needsFormat && messageDetection.isAboutMenu(userMessageText)) {
@@ -169,9 +244,11 @@ class MistralApiClient {
             }
         } catch (error) {
             console.error('Error in callMistralAPI:', error);
-            // Restituisci un messaggio di errore chiaro invece di inventare una risposta
+            // Rileva la lingua dell'utente per il messaggio di errore
+            const detectedLanguage = this.languageDetector.detect(userMessage || '');
+            // Restituisci un messaggio di errore nella lingua rilevata
             return {
-                content: "Mi scusi, si è verificato un errore nella connessione al servizio. Per favore riprovi tra poco.",
+                content: this.multiLanguageHandler.getErrorMessage(detectedLanguage),
                 role: 'assistant'
             };
         }

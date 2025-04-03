@@ -9,6 +9,19 @@ const { connectMongoDB, connectRedis } = require('./config/database');
 const passportConfig = require('./config/passport');
 const chatRoutes = require('./routes/chatRoutes');
 const authRoutes = require('./routes/authRoutes');
+const mistralRoutes = require('./routes/mistralRoutes');
+
+// Importa e applica la patch multilingua
+const { applyMultilingualPatch } = require('./services/mistral/linguistic-patch');
+const mistralService = require('./services/mistralService');
+
+// Applica la patch per supporto multilingua
+try {
+    applyMultilingualPatch(mistralService);
+    console.log('Patch linguistica applicata con successo!');
+} catch (error) {
+    console.error('Errore nell\'applicazione della patch linguistica:', error);
+}
 
 // Importa i servizi AI in modo condizionale
 let openAIService;
@@ -55,6 +68,7 @@ app.use(morgan('dev'));
 // Routes
 app.use('/api/chat', chatRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/mistral', mistralRoutes);  // Aggiungi l'endpoint di test
 
 // Reindirizzamenti per retrocompatibilità
 app.all('/chat/*', (req, res) => {
