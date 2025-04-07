@@ -1,0 +1,60 @@
+{
+  "eventi": [
+    {
+      "nome": "Serata di degustazione olio d'oliva",
+      "descrizione": "Degustazione guidata degli oli di oliva prodotti nella nostra tenuta",
+      "data": "ogni martedì",
+      "orario": "19:00 - 20:30",
+      "luogo": "Sala degustazione",
+      "prezzo": 25,
+      "prenotazione": "richiesta"
+    },
+    {
+      "nome": "Concerto di musica dal vivo",
+      "descrizione": "Musica jazz e classica dal vivo con artisti locali",
+      "data": "ogni venerdì",
+      "orario": "21:00 - 23:00",
+      "luogo": "Terrazza panoramica",
+      "prezzo": 15,
+      "prenotazione": "consigliata"
+    },
+    {
+      "nome": "Aperitivo al tramonto",
+      "descrizione": "Aperitivo con vista panoramica sulle colline toscane",
+      "data": "ogni giorno",
+      "orario": "18:30 - 20:00",
+      "luogo": "Bar della piscina",
+      "prezzo": 20,
+      "prenotazione": "non necessaria"
+    },
+    {
+      "nome": "Cena tematica regionale",
+      "descrizione": "Cena con menu speciale dedicato alle regioni d'Italia",
+      "data": "ogni sabato",
+      "orario": "20:00 - 22:30",
+      "luogo": "Ristorante principale",
+      "prezzo": 50,
+      "prenotazione": "richiesta"
+    }
+  ],
+  "eventi_speciali": [
+    {
+      "nome": "Festival del Vino",
+      "descrizione": "Un weekend dedicato ai migliori vini della Toscana con degustazioni e workshop",
+      "data": "primo weekend di ogni mese",
+      "durata": "3 giorni",
+      "luogo": "Cantina e giardini della villa",
+      "prezzo": 75,
+      "prenotazione": "richiesta con anticipo"
+    },
+    {
+      "nome": "Cooking Masterclass",
+      "descrizione": "Masterclass con chef stellati ospiti",
+      "data": "ultimo sabato del mese",
+      "orario": "10:00 - 15:00",
+      "luogo": "Cucina professionale",
+      "prezzo": 120,
+      "prenotazione": "obbligatoria con anticipo"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "orari": {
+    "pranzo": "12:30 - 14:30",
+    "cena": "19:30 - 22:30",
+    "giorni_apertura": "tutti i giorni"
+  },
+  "prenotazioni": {
+    "telefono": "interno 122",
+    "email": "ristorante@villapetriolo.com"
+  },
+  "menu": {
+    "antipasti": [
+      {"nome": "Carpaccio di manzo con scaglie di parmigiano", "prezzo": 16},
+      {"nome": "Burrata con pomodorini e basilico", "prezzo": 14},
+      {"nome": "Tagliere di salumi e formaggi toscani", "prezzo": 18}
+    ],
+    "primi": [
+      {"nome": "Pappardelle al ragù di cinghiale", "prezzo": 18},
+      {"nome": "Risotto ai funghi porcini", "prezzo": 16},
+      {"nome": "Spaghetti alle vongole", "prezzo": 18}
+    ],
+    "secondi": [
+      {"nome": "Bistecca alla fiorentina (per 2 persone)", "prezzo": 70},
+      {"nome": "Filetto di branzino con verdure di stagione", "prezzo": 24},
+      {"nome": "Tagliata di manzo con rucola e parmigiano", "prezzo": 26}
+    ],
+    "dolci": [
+      {"nome": "Tiramisù della casa", "prezzo": 8},
+      {"nome": "Panna cotta ai frutti di bosco", "prezzo": 8},
+      {"nome": "Cantucci e Vin Santo", "prezzo": 10}
+    ]
+  }
+}

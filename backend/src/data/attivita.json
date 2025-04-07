@@ -1,0 +1,70 @@
+{
+  "nella_struttura": [
+    {
+      "nome": "Degustazione vini",
+      "descrizione": "Degustazione di vini locali con il nostro sommelier esperto",
+      "orari": "Tutti i giorni alle 17:00",
+      "durata": "90 minuti",
+      "prezzo": 35,
+      "prenotazione": "richiesta"
+    },
+    {
+      "nome": "Corso di cucina toscana",
+      "descrizione": "Impara a preparare piatti tipici della tradizione toscana con il nostro chef",
+      "orari": "Lunedì, mercoledì e venerdì alle 10:00",
+      "durata": "3 ore",
+      "prezzo": 65,
+      "prenotazione": "richiesta"
+    },
+    {
+      "nome": "Passeggiata guidata nel bosco",
+      "descrizione": "Esplora i boschi circostanti con una guida naturalistica",
+      "orari": "Martedì e giovedì alle 9:30",
+      "durata": "2 ore",
+      "prezzo": 20,
+      "prenotazione": "richiesta"
+    },
+    {
+      "nome": "Yoga nel parco",
+      "descrizione": "Sessione di yoga all'aperto nel parco della villa",
+      "orari": "Tutti i giorni alle 8:00",
+      "durata": "60 minuti",
+      "prezzo": 15,
+      "prenotazione": "consigliata"
+    }
+  ],
+  "nei_dintorni": [
+    {
+      "nome": "Tour del Chianti",
+      "descrizione": "Visita delle cantine più rinomate della regione del Chianti",
+      "distanza": "30 minuti di auto",
+      "durata": "mezza giornata",
+      "prezzo": 85,
+      "prenotazione": "richiesta con 24h di anticipo"
+    },
+    {
+      "nome": "Visita a San Gimignano",
+      "descrizione": "Escursione alla città medievale delle torri",
+      "distanza": "45 minuti di auto",
+      "durata": "mezza giornata",
+      "prezzo": 60,
+      "prenotazione": "richiesta con 24h di anticipo"
+    },
+    {
+      "nome": "Tour in bici delle colline toscane",
+      "descrizione": "Escursione in bicicletta tra le pittoresche colline toscane",
+      "distanza": "partenza dalla struttura",
+      "durata": "3-4 ore",
+      "prezzo": 40,
+      "prenotazione": "richiesta"
+    },
+    {
+      "nome": "Visita a Firenze",
+      "descrizione": "Tour guidato della città d'arte",
+      "distanza": "1 ora di auto",
+      "durata": "giornata intera",
+      "prezzo": 90,
+      "prenotazione": "richiesta con 48h di anticipo"
+    }
+  ]
+}

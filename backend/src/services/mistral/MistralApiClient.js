@@ -130,6 +130,15 @@ class MistralApiClient {
                         content: `Rispondi all'utente in lingua ${detectedLanguage}. Respond in the ${detectedLanguage} language. 回复用${detectedLanguage}语言。Отвечай на языке ${detectedLanguage}.`
                     });
                     
+                    // Aggiungi sistema di istruzioni sulla brevità
+                    messagesForAPI.push({
+                        role: 'system',
+                        content: `IMPORTANTE: Le tue risposte devono essere estremamente brevi e concise. `+
+                                 `Concentrati solo sulle informazioni richieste. Non aggiungere dettagli non richiesti. ` +
+                                 `Per risposte generali, limita a 1-2 frasi. Per informazioni specifiche, massimo 4-5 righe. ` +
+                                 `Se si tratta di un saluto, rispondi solo con un breve saluto.`
+                    });
+                    
                     // Prepara le istruzioni da inviare all'AI per garantire risposte multilingua corrette
                     let languageInstructions = [];
                     

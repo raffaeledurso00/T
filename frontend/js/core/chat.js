@@ -73,16 +73,16 @@ initialize: function() {
         <h2>Benvenuto al Concierge Digitale di Villa Petriolo</h2>
         <p>Sono qui per aiutarti con:</p>
         <div class="suggestion-chips">
-          <button class="suggestion-chip" data-message="Quali sono gli orari del ristorante?">
+          <button class="suggestion-chip" data-message="Quali sono gli orari del ristorante?" style="--idx: 0">
             <i class="fas fa-utensils"></i> Ristorante
           </button>
-          <button class="suggestion-chip" data-message="Che attività posso fare oggi?">
+          <button class="suggestion-chip" data-message="Che attività posso fare oggi?" style="--idx: 1">
             <i class="fas fa-hiking"></i> Attività
           </button>
-          <button class="suggestion-chip" data-message="Quali eventi sono in programma?">
+          <button class="suggestion-chip" data-message="Quali eventi sono in programma?" style="--idx: 2">
             <i class="fas fa-calendar-alt"></i> Eventi
           </button>
-          <button class="suggestion-chip" data-message="Come posso prenotare un servizio?">
+          <button class="suggestion-chip" data-message="Come posso prenotare un servizio?" style="--idx: 3">
             <i class="fas fa-concierge-bell"></i> Servizi
           </button>
         </div>
@@ -140,9 +140,65 @@ initialize: function() {
       
       // Clear and populate messages
       messagesContainer.innerHTML = '';
-      chat.messages.forEach(msg => {
-        window.MessageComponent.displayMessage(msg.text, msg.sender);
-      });
+      
+      // Verifica se ci sono messaggi
+      if (chat.messages.length === 0 || 
+          (chat.messages.length === 1 && chat.messages[0].sender === 'bot' && 
+           chat.messages[0].text.includes('Benvenuto al Concierge Digitale'))) {
+        // Se non ci sono messaggi o c'è solo il messaggio di benvenuto, mostra il messaggio di benvenuto formattato
+        console.log('No messages or only welcome message, showing formatted welcome message');
+        this.showWelcomeMessage();
+      } else {
+        // Recupera il primo messaggio
+        const firstMessage = chat.messages[0];
+        
+        // Se il primo messaggio è del bot ed è un messaggio di benvenuto, lo sostituiamo con la versione formattata
+        if (firstMessage.sender === 'bot' && firstMessage.text.includes('Benvenuto al Concierge Digitale')) {
+          console.log('Found welcome message, replacing with formatted version');
+          
+          // Mostra il messaggio di benvenuto formattato
+          const welcomeDiv = document.createElement('div');
+          welcomeDiv.className = 'welcome-message';
+          welcomeDiv.innerHTML = `
+            <h2>Benvenuto al Concierge Digitale di Villa Petriolo</h2>
+            <p>Sono qui per aiutarti con:</p>
+            <div class="suggestion-chips">
+              <button class="suggestion-chip" data-message="Quali sono gli orari del ristorante?" style="--idx: 0">
+                <i class="fas fa-utensils"></i> Ristorante
+              </button>
+              <button class="suggestion-chip" data-message="Che attività posso fare oggi?" style="--idx: 1">
+                <i class="fas fa-hiking"></i> Attività
+              </button>
+              <button class="suggestion-chip" data-message="Quali eventi sono in programma?" style="--idx: 2">
+                <i class="fas fa-calendar-alt"></i> Eventi
+              </button>
+              <button class="suggestion-chip" data-message="Come posso prenotare un servizio?" style="--idx: 3">
+                <i class="fas fa-concierge-bell"></i> Servizi
+              </button>
+            </div>
+          `;
+          
+          // Aggiungi il messaggio al container
+          messagesContainer.appendChild(welcomeDiv);
+          
+          // Aggiungi event listener ai chip di suggerimento
+          if (window.SuggestionsComponent) {
+            setTimeout(() => {
+              window.SuggestionsComponent.setupWelcomeSuggestions(welcomeDiv);
+            }, 100);
+          }
+          
+          // Visualizza tutti gli altri messaggi tranne il primo (di benvenuto)
+          for (let i = 1; i < chat.messages.length; i++) {
+            window.MessageComponent.displayMessage(chat.messages[i].text, chat.messages[i].sender);
+          }
+        } else {
+          // Visualizza tutti i messaggi normalmente
+          chat.messages.forEach(msg => {
+            window.MessageComponent.displayMessage(msg.text, msg.sender);
+          });
+        }
+      }
       
       // Reset context
       if (window.conversationContext) {

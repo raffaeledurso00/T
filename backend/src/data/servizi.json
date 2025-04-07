@@ -1,0 +1,92 @@
+{
+  "servizi_hotel": [
+    {
+      "nome": "Reception",
+      "orari": "24 ore su 24",
+      "descrizione": "Servizio di accoglienza e assistenza agli ospiti disponibile 24 ore su 24"
+    },
+    {
+      "nome": "Servizio in camera",
+      "orari": "7:00 - 23:00",
+      "descrizione": "Servizio di ristorazione in camera"
+    },
+    {
+      "nome": "Concierge",
+      "orari": "8:00 - 22:00",
+      "descrizione": "Assistenza per prenotazioni, informazioni e servizi personalizzati"
+    },
+    {
+      "nome": "Pulizia camere",
+      "orari": "9:00 - 14:00",
+      "descrizione": "Servizio di pulizia giornaliera delle camere"
+    },
+    {
+      "nome": "Wi-Fi",
+      "orari": "24 ore su 24",
+      "descrizione": "Connessione Wi-Fi gratuita in tutta la struttura"
+    },
+    {
+      "nome": "Parcheggio",
+      "orari": "24 ore su 24",
+      "descrizione": "Parcheggio gratuito per gli ospiti"
+    }
+  ],
+  "servizi_benessere": [
+    {
+      "nome": "Spa e centro benessere",
+      "orari": "10:00 - 20:00",
+      "descrizione": "Centro benessere con sauna, bagno turco, piscina interna riscaldata e area relax",
+      "prezzo": "Accesso incluso per gli ospiti, trattamenti a pagamento",
+      "prenotazione": "Richiesta per i trattamenti"
+    },
+    {
+      "nome": "Massaggi",
+      "orari": "11:00 - 19:00",
+      "descrizione": "Vari tipi di massaggi: rilassante, decontratturante, aromaterapico",
+      "prezzo": "da 60€ per 50 minuti",
+      "prenotazione": "Richiesta con almeno 4 ore di anticipo"
+    },
+    {
+      "nome": "Trattamenti viso",
+      "orari": "11:00 - 19:00",
+      "descrizione": "Trattamenti viso personalizzati",
+      "prezzo": "da 45€ per 30 minuti",
+      "prenotazione": "Richiesta"
+    },
+    {
+      "nome": "Piscina esterna",
+      "orari": "8:00 - 19:00 (maggio-settembre)",
+      "descrizione": "Piscina esterna con vista sulle colline",
+      "prezzo": "Incluso nel soggiorno",
+      "prenotazione": "Non necessaria"
+    }
+  ],
+  "servizi_extra": [
+    {
+      "nome": "Trasferimento aeroporto",
+      "descrizione": "Servizio di trasferimento da/per gli aeroporti di Firenze e Pisa",
+      "prezzo": "da 80€ a tratta",
+      "prenotazione": "Richiesta con 24 ore di anticipo"
+    },
+    {
+      "nome": "Noleggio biciclette",
+      "orari": "9:00 - 18:00",
+      "descrizione": "Noleggio di biciclette tradizionali ed elettriche",
+      "prezzo": "15€ all'ora o 45€ al giorno",
+      "prenotazione": "Consigliata"
+    },
+    {
+      "nome": "Servizio lavanderia",
+      "orari": "8:00 - 17:00",
+      "descrizione": "Servizio di lavaggio e stiratura dei capi",
+      "prezzo": "Secondo listino in camera",
+      "prenotazione": "Non necessaria"
+    },
+    {
+      "nome": "Baby sitting",
+      "descrizione": "Servizio di baby sitting su richiesta",
+      "prezzo": "25€ all'ora",
+      "prenotazione": "Richiesta con 24 ore di anticipo"
+    }
+  ]
+}
