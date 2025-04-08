@@ -14,6 +14,7 @@ const passport = require('passport');
 const cookieParser = require('cookie-parser');
 const initializePassport = require('./config/passportConfig');
 const authRoutes = require('./routes/authRoutes');
+const knowledgeBaseService = require('./services/knowledgeBase');
 
 // Load environment variables
 dotenv.config();
@@ -160,6 +161,16 @@ app.use((err, req, res, next) => {
 // Initialize and start the application
 const startServer = async () => {
     try {
+        // Make sure KnowledgeBase is initialized
+        try {
+            console.log('Initializing KnowledgeBase service...');
+            await knowledgeBaseService.initialize();
+            console.log('KnowledgeBase service initialized successfully');
+        } catch (kbError) {
+            console.error('Error initializing KnowledgeBase service:', kbError);
+            console.log('Will continue with fallback responses');
+        }
+        
         // Connect to databases with fallbacks - don't throw if they fail
         let mongoConnected = false;
         let redisConnected = false;
