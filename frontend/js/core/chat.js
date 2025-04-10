@@ -243,10 +243,25 @@ initialize: function() {
      * @param {string} sender - Mittente ('user' o 'bot')
      */
     addMessage: function(text, sender) {
-      console.log('Adding message:', { sender, text: text.substring(0, 30) + '...' });
+      // Verifica che il testo sia una stringa
+      let messageText = text;
+      if (typeof text !== 'string') {
+        console.warn('Message text is not a string:', text);
+        // Converti l'oggetto in stringa se necessario
+        if (text === null || text === undefined) {
+          messageText = "";
+        } else if (typeof text === 'object') {
+          // Se è un oggetto, prova a utilizzare la proprietà message se esiste
+          messageText = text.message || JSON.stringify(text);
+        } else {
+          messageText = String(text);
+        }
+      }
+      
+      console.log('Adding message:', { sender, text: messageText.substring(0, 30) + '...' });
       
       // Display message
-      window.MessageComponent.displayMessage(text, sender);
+      window.MessageComponent.displayMessage(messageText, sender);
       
       // Save message
       const chats = window.StorageManager.getChats();
@@ -263,14 +278,14 @@ initialize: function() {
       };
       
       // Add message
-      chat.messages.push({ sender, text });
+      chat.messages.push({ sender, text: messageText });
       
       // Update chat info
       chat.timestamp = new Date().toISOString();
       
       // Set title from first user message
       if (sender === 'user' && chat.messages.filter(m => m.sender === 'user').length === 1) {
-        chat.title = text.length > 20 ? text.substring(0, 17) + '...' : text;
+        chat.title = messageText.length > 20 ? messageText.substring(0, 17) + '...' : messageText;
       }
       
       // Save
@@ -375,17 +390,36 @@ initialize: function() {
           }
           
           // Invia il messaggio al backend
-          const botResponse = await window.ChatAPI.sendMessage(
-            enhancedMessage, 
-            this.state.currentChatId,
-            userContext
-          );
-          
-          // Rimuovi l'indicatore di digitazione
-          window.MessageComponent.removeTypingIndicator();
-          
-          // Aggiungi la risposta del bot
-          this.addMessage(botResponse, 'bot');
+          try {
+            const botResponse = await window.ChatAPI.sendMessage(
+              enhancedMessage, 
+              this.state.currentChatId,
+              userContext
+            );
+            
+            // Rimuovi l'indicatore di digitazione
+            window.MessageComponent.removeTypingIndicator();
+            
+            // Aggiungi la risposta del bot
+            this.addMessage(botResponse, 'bot');
+          } catch (serverError) {
+            console.error('Error from server:', serverError);
+            
+            // Rimuovi l'indicatore di digitazione
+            window.MessageComponent.removeTypingIndicator();
+            
+            // Se l'errore contiene un messaggio personalizzato, mostralo
+            let errorMessage = "Mi scusi, si è verificato un errore. Potrebbe riprovare tra poco?";
+            
+            // Se è un messaggio semplice ('ciao', 'salve', ecc.), fornisci una risposta di base
+            const simpleGreetings = ['ciao', 'salve', 'buongiorno', 'buonasera', 'hey', 'hi', 'hello'];
+            if (simpleGreetings.includes(userMessage.toLowerCase().trim())) {
+              errorMessage = "Salve! Sono il concierge digitale di Villa Petriolo. Come posso aiutarla oggi?";
+            }
+            
+            // Mostra il messaggio di errore o la risposta di fallback
+            this.addMessage(errorMessage, 'bot');
+          }
         } catch (error) {
           console.error('Error processing message:', error);
           

@@ -139,6 +139,30 @@ class MistralApiClient {
                                  `Se si tratta di un saluto, rispondi solo con un breve saluto.`
                     });
                     
+                    // Verifica se si tratta di una domanda sugli orari del ristorante
+                    const isRestaurantHoursQuestion = userMessageText && (
+                        userMessageText.toLowerCase() === "quali sono gli orari del ristorante?" ||
+                        userMessageText.toLowerCase().includes("orari del ristorante") ||
+                        userMessageText.toLowerCase().includes("quando apre il ristorante") ||
+                        (userMessageText.toLowerCase().includes("ristorante") && 
+                         userMessageText.toLowerCase().includes("orari"))
+                    );
+                    
+                    // Se è una domanda sugli orari, aggiungiamo un messaggio di sistema molto specifico
+                    if (isRestaurantHoursQuestion) {
+                        messagesForAPI.push({
+                            role: 'system',
+                            content: `INFORMAZIONE CRITICA: L'utente sta chiedendo gli orari del ristorante.\n` +
+                                     `Questi sono gli orari CORRETTI che DEVI fornire:\n` +
+                                     `- Pranzo: 12:30 - 14:30\n` +
+                                     `- Cena: 19:30 - 22:30\n` +
+                                     `- Aperto: tutti i giorni\n` +
+                                     `- Per prenotazioni: interno 122 o ristorante@villapetriolo.com\n\n` +
+                                     `DEVI includere queste informazioni nella risposta. NON dire che non hai informazioni sugli orari.`
+                        });
+                        console.log(`[MistralApiClient] Aggiunta istruzione specifica per gli orari del ristorante`);
+                    }
+                    
                     // Prepara le istruzioni da inviare all'AI per garantire risposte multilingua corrette
                     let languageInstructions = [];
                     

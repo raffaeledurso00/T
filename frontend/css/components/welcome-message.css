@@ -1,6 +1,40 @@
 /* frontend/css/components/welcome-message.css */
 /* Stili per il messaggio di benvenuto e i suggestion chips */
 
+/* Smaller version of the welcome message for inside chat bubbles */
+.welcome-message-small {
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  background-color: rgba(159, 136, 124, 0.05);
+  border-radius: 8px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.welcome-message-small p {
+  color: #e0e0e0;
+  margin-bottom: 12px;
+  font-size: 1em;
+}
+
+.welcome-message-small .quick-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.welcome-message-small .suggestion-chip {
+  font-size: 0.85rem;
+  padding: 6px 12px;
+}
+
+/* Ensure suggestions work in message bubbles */
+.bot-message .suggestion-chip {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 .welcome-message {
   width: 100%;
   max-width: 600px;

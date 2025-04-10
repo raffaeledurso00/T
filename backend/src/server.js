@@ -5,7 +5,8 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const passport = require('passport');
 const morgan = require('morgan');
-const { connectMongoDB, connectRedis } = require('./config/database');
+const mongoose = require('mongoose');
+const { connectMongoDB, connectRedis, redisClient } = require('./config/database');
 const passportConfig = require('./config/passport');
 const chatRoutes = require('./routes/chatRoutes');
 const authRoutes = require('./routes/authRoutes');
@@ -37,6 +38,64 @@ try {
 
 // Load environment variables
 dotenv.config();
+
+// Configura endpoint di backup e servizi alternativi
+const setupBackupServices = () => {
+    console.log('Configurazione di servizi di backup in caso di problemi di connessione...');
+    
+    try {
+        // Crea modelli locali se DB non disponibile
+        if (!mongoose.connection || mongoose.connection.readyState !== 1) {
+            console.log('MongoDB non connesso, configurazione fallback locali...');
+            
+            // Carica i dati di fallback
+            let fallbackData = {};
+            
+            try {
+                fallbackData = {
+                    menu: require('./data/ristorante.json').menu || [],
+                    activities: require('./data/attivita.json') || {},
+                    services: require('./data/servizi.json') || {},
+                    villaInfo: {
+                        "name": "Villa Petriolo",
+                        "address": "Via di Petriolo, 5, 50063 Figline Valdarno FI",
+                        "coordinates": "43.6203, 11.4254",
+                        "description": "Lussuosa villa toscana con ristorante biologico, piscina panoramica, spa e vigna.",
+                        "checkIn": "14:00",
+                        "checkOut": "11:00",
+                        "wifiPassword": "VillaPetriolo2024",
+                        "contacts": {
+                            "reception": "+39 055 123456",
+                            "emergency": "+39 055 123457",
+                            "email": "info@villapetriolo.it"
+                        }
+                    }
+                };
+            } catch (e) {
+                console.error('Errore nel caricamento dei dati di fallback:', e);
+                // Fallback minimale in caso di errore nei fallback
+                fallbackData = {
+                    menu: [],
+                    activities: {},
+                    services: {},
+                    villaInfo: { name: "Villa Petriolo" }
+                };
+            }
+            
+            // Salva in Redis per disponibilità locale
+            try {
+                if (redisClient && typeof redisClient.set === 'function') {
+                    redisClient.set('fallback_data', JSON.stringify(fallbackData), 'EX', 86400 * 7);
+                    console.log('Dati di fallback salvati correttamente in Redis');
+                }
+            } catch (redisErr) {
+                console.error('Errore nel salvataggio in Redis dei dati di fallback:', redisErr);
+            }
+        }
+    } catch (error) {
+        console.error('Errore nella configurazione dei servizi di backup:', error);
+    }
+};
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -152,6 +211,9 @@ const initializeApp = async () => {
     try {
         await connectMongoDB();
         await connectRedis();
+        
+        // Configura i servizi di backup dopo il tentativo di connessione
+        setupBackupServices();
         
         // Start periodic cleanup of old conversations
         setInterval(() => {

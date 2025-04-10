@@ -1,8 +1,8 @@
 // src/services/mistral/handlers/ActivitiesHandler.js
 
 class ActivitiesHandler {
-    constructor(knowledgeBase) {
-        this.knowledgeBase = knowledgeBase || { getActivitiesData: () => null };
+    constructor(activitiesData) {
+        this.activitiesData = activitiesData || {};
     }
     
     /**
@@ -11,6 +11,10 @@ class ActivitiesHandler {
      * @returns {boolean} - True if it's an activities info request
      */
     isActivitiesInfoRequest(message) {
+        if (!message || typeof message !== 'string') {
+            return false;
+        }
+        
         const lowerMsg = message.toLowerCase();
         const activityKeywords = [
             'attività', 'fare', 'tour', 'passeggiata', 'escursione', 'visita', 
@@ -26,21 +30,92 @@ class ActivitiesHandler {
      * @returns {string} - Response about activities
      */
     handleActivitiesRequest(message) {
-        // Try to get data from knowledgebase first
-        const activitiesData = this.knowledgeBase.getActivitiesData();
-        
-        if (activitiesData && Object.keys(activitiesData).length > 0) {
-            console.log('[ActivitiesHandler] Using activities data from knowledgebase');
-            return this.handleActivitiesRequestWithKB(message, activitiesData);
-        }
-        
-        // Fallback to hardcoded responses if knowledgebase data is not available
-        console.log('[ActivitiesHandler] Activities knowledgebase data unavailable, using fallback');
-        return this.handleActivitiesRequestFallback(message);
+        // Process data from JSON
+        return this.processActivitiesRequest(message, this.activitiesData);
     }
     
-    // Handle activities requests with data from knowledgebase
-    handleActivitiesRequestWithKB(message, activitiesData) {
+    // Process activities request using data
+    processActivitiesRequest(message, activitiesData) {
+        // If activitiesData is empty or undefined, use default data
+        if (!activitiesData || Object.keys(activitiesData).length === 0) {
+            // Default activities data as fallback
+            activitiesData = {
+                "nella_struttura": [
+                    {
+                        "nome": "Degustazione vini",
+                        "descrizione": "Degustazione di vini locali con il nostro sommelier esperto",
+                        "orari": "Tutti i giorni alle 17:00",
+                        "durata": "90 minuti",
+                        "prezzo": 35,
+                        "prenotazione": "richiesta"
+                    },
+                    {
+                        "nome": "Corso di cucina toscana",
+                        "descrizione": "Impara a preparare piatti tipici della tradizione toscana con il nostro chef",
+                        "orari": "Lunedì, mercoledì e venerdì alle 10:00",
+                        "durata": "3 ore",
+                        "prezzo": 65,
+                        "prenotazione": "richiesta"
+                    },
+                    {
+                        "nome": "Passeggiata guidata nel bosco",
+                        "descrizione": "Esplora i boschi circostanti con una guida naturalistica",
+                        "orari": "Martedì e giovedì alle 9:30",
+                        "durata": "2 ore",
+                        "prezzo": 20,
+                        "prenotazione": "richiesta"
+                    },
+                    {
+                        "nome": "Yoga nel parco",
+                        "descrizione": "Sessione di yoga all'aperto nel parco della villa",
+                        "orari": "Tutti i giorni alle 8:00",
+                        "durata": "60 minuti",
+                        "prezzo": 15,
+                        "prenotazione": "consigliata"
+                    }
+                ],
+                "nei_dintorni": [
+                    {
+                        "nome": "Tour del Chianti",
+                        "descrizione": "Visita delle cantine più rinomate della regione del Chianti",
+                        "distanza": "30 minuti di auto",
+                        "durata": "mezza giornata",
+                        "prezzo": 85,
+                        "prenotazione": "richiesta con 24h di anticipo"
+                    },
+                    {
+                        "nome": "Visita a San Gimignano",
+                        "descrizione": "Escursione alla città medievale delle torri",
+                        "distanza": "45 minuti di auto",
+                        "durata": "mezza giornata",
+                        "prezzo": 60,
+                        "prenotazione": "richiesta con 24h di anticipo"
+                    },
+                    {
+                        "nome": "Tour in bici delle colline toscane",
+                        "descrizione": "Escursione in bicicletta tra le pittoresche colline toscane",
+                        "distanza": "partenza dalla struttura",
+                        "durata": "3-4 ore",
+                        "prezzo": 40,
+                        "prenotazione": "richiesta"
+                    },
+                    {
+                        "nome": "Visita a Firenze",
+                        "descrizione": "Tour guidato della città d'arte",
+                        "distanza": "1 ora di auto",
+                        "durata": "giornata intera",
+                        "prezzo": 90,
+                        "prenotazione": "richiesta con 48h di anticipo"
+                    }
+                ]
+            };
+            console.log('[ActivitiesHandler] Using default activities data');
+        }
+        
+        if (!message || typeof message !== 'string') {
+            return "Mi dispiace, non ho capito la sua richiesta sulle attività.";
+        }
+        
         const lowerMsg = message.toLowerCase();
         
         // Response about activities in the structure
@@ -138,53 +213,6 @@ class ActivitiesHandler {
         
         response += `Per ulteriori dettagli su specifiche attività o per prenotazioni, non esiti a chiedere.`;
         return response;
-    }
-    
-    // Fallback method with hardcoded responses for activities
-    handleActivitiesRequestFallback(message) {
-        const lowerMsg = message.toLowerCase();
-        
-        // Response about activities in the structure
-        if (lowerMsg.includes('struttura') || lowerMsg.includes('qui') ||
-            lowerMsg.includes('villa')) {
-            return `Ecco le attività disponibili nella nostra struttura:\n\n` +
-                   `- Degustazione vini: degustazione guidata dei migliori vini locali con il nostro sommelier\n` +
-                   `  Orari: Tutti i giorni alle 17:00, Durata: 90 minuti, Prezzo: €35\n\n` +
-                   `- Corso di cucina toscana: impara a preparare piatti tipici con il nostro chef\n` +
-                   `  Orari: Lunedì, mercoledì e venerdì alle 10:00, Durata: 3 ore, Prezzo: €65\n\n` +
-                   `- Passeggiata guidata nel bosco: esplora i boschi circostanti con una guida naturalistica\n` +
-                   `  Orari: Martedì e giovedì alle 9:30, Durata: 2 ore, Prezzo: €20\n\n` +
-                   `- Yoga nel parco: sessione di yoga all'aperto nel parco della villa\n` +
-                   `  Orari: Tutti i giorni alle 8:00, Durata: 60 minuti, Prezzo: €15\n\n` +
-                   `Per prenotazioni, si prega di rivolgersi alla reception o contattarci al numero interno 100.`;
-        }
-        
-        // Response about activities in the surroundings
-        if (lowerMsg.includes('dintorni') || lowerMsg.includes('fuori') ||
-            lowerMsg.includes('vicino')) {
-            return `Ecco le attività disponibili nei dintorni:\n\n` +
-                   `- Tour del Chianti: visita delle cantine più rinomate della regione del Chianti\n` +
-                   `  Distanza: 30 minuti di auto, Durata: mezza giornata, Prezzo: €85\n\n` +
-                   `- Visita a San Gimignano: escursione alla città medievale delle torri\n` +
-                   `  Distanza: 45 minuti di auto, Durata: mezza giornata, Prezzo: €60\n\n` +
-                   `- Tour in bici delle colline toscane: escursione in bicicletta tra le pittoresche colline\n` +
-                   `  Distanza: partenza dalla struttura, Durata: 3-4 ore, Prezzo: €40\n\n` +
-                   `- Visita a Firenze: tour guidato della città d'arte\n` +
-                   `  Distanza: 1 ora di auto, Durata: giornata intera, Prezzo: €90\n\n` +
-                   `Possiamo organizzare il trasporto e le prenotazioni. Contatti la reception per maggiori dettagli.`;
-        }
-        
-        // General response about all activities
-        return `Ecco alcune attività che può fare durante il suo soggiorno:\n\n` +
-               `NELLA STRUTTURA:\n` +
-               `- Degustazione vini (tutti i giorni, €35)\n` +
-               `- Corso di cucina toscana (lun, mer, ven, €65)\n` +
-               `- Yoga nel parco (ogni mattina, €15)\n\n` +
-               `NEI DINTORNI:\n` +
-               `- Tour del Chianti (30 minuti di auto, €85)\n` +
-               `- Visita a San Gimignano (45 minuti di auto, €60)\n` +
-               `- Tour in bici delle colline toscane (€40)\n\n` +
-               `Per ulteriori dettagli su specifiche attività o per prenotazioni, non esiti a chiedere.`;
     }
 }
 

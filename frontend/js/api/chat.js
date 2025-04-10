@@ -1,4 +1,8 @@
-// frontend/js/api/chat.js
+        // Controlla se la risposta contiene un errore
+        if (data.error) {
+            console.warn('Server returned an error:', data.error);
+            throw new Error(`Server error: ${data.error} - ${data.message || 'No additional details'}`);
+        }// frontend/js/api/chat.js
 // API for interacting with the chat backend
 
 const ChatAPI = {
@@ -106,9 +110,84 @@ const ChatAPI = {
         const data = await response.json();
         console.log('Response received:', data);
         
+        // Controlla se la risposta contiene un errore
+        if (data.error) {
+            console.warn('Server returned an error:', data.error);
+            throw new Error(`Server error: ${data.error} - ${data.message || 'No additional details'}`);
+        }
+        
         // Extract the message from the response
-        return data.message || 
-               (typeof data === 'string' ? data : "Risposta non valida dal server");
+        let result;
+        
+        // Controlla il tipo di risposta e estrai il messaggio in modo appropriato
+        if (typeof data === 'string') {
+            // Se la risposta è già una stringa, usala direttamente
+            result = data;
+        } else if (data && typeof data === 'object') {
+            // Se la risposta è un oggetto, cerca il campo 'message'
+            if (typeof data.message === 'string') {
+                result = data.message;
+            } else if (data.message !== undefined) {
+                // Se c'è message ma non è una stringa, stringificalo
+                try {
+                    // Se l'oggetto message ha un campo 'message' (caso comune nelle risposte annidate)
+                    if (typeof data.message === 'object' && data.message && typeof data.message.message === 'string') {
+                        result = data.message.message;
+                    } else {
+                        result = String(data.message);
+                    }
+                } catch (e) {
+                    result = JSON.stringify(data.message);
+                }
+            } else {
+                // Se non c'è message, usa l'intero oggetto
+                result = JSON.stringify(data);
+            }
+        } else {
+            // Fallback per qualsiasi altro caso
+            result = "Risposta non valida dal server";
+        }
+        
+        // Rimuovi le sequenze di escape \n e \r ed eventuali quote non necessarie
+        if (typeof result === 'string') {
+            // Rimuovi le citazioni iniziali e finali se sono presenti
+            if (result.startsWith('"') && result.endsWith('"')) {
+                result = result.slice(1, -1);
+            }
+            
+            // Controlla se è una risposta in formato JSON non processata
+            if (result.includes('"message":')) {
+                try {
+                    const msgMatch = result.match(/"message"\s*:\s*"([^"]+)"/i);
+                    if (msgMatch && msgMatch[1]) {
+                        result = msgMatch[1];
+                    }
+                } catch (e) {
+                    console.log('Errore nel parse specifico:', e);
+                }
+            }
+            
+            // Sostituisci le sequenze di escape con i caratteri effettivi
+            result = result.replace(/\\n/g, '\n')
+                         .replace(/\\r/g, '\r')
+                         .replace(/\\t/g, '\t')
+                         .replace(/\\(\\')/g, "$1");
+        }
+        
+        // Aggiungi un caso speciale per il pattern esatto nello screenshot
+        if (typeof result === 'string' && result.startsWith('{"message":"') && result.includes('sessionId') && result.includes('source') && result.includes('language')) {
+            try {
+                // Estrai direttamente il contenuto del messaggio
+                const match = result.match(/\{"message":"([^"]+)"/i);
+                if (match && match[1]) {
+                    result = match[1];
+                }
+            } catch (e) {
+                console.log('Errore nell\'elaborazione del pattern specifico:', e);
+            }
+        }
+
+        return result;
 
     } catch (error) {
         console.error('Error sending message:', error);

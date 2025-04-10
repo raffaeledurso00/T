@@ -64,6 +64,16 @@ class LanguageDetector {
             return 'it'; // Default a italiano se il testo è vuoto
         }
         
+        // Check if it's a restaurant hours query - these are almost always Italian
+        const lowerText = text.toLowerCase();
+        if (lowerText.includes('orari del ristorante') || 
+            (lowerText.includes('quali sono gli orari') && lowerText.includes('ristorante')) ||
+            lowerText.includes('quando apre il ristorante') || 
+            (lowerText.includes('ristorante') && lowerText.includes('orari'))) {
+            console.log('[LanguageDetector] Restaurant hours query detected, forcing Italian');
+            return 'it';
+        }
+        
         // Patch per rilevamento del russo
         const russianAnalysis = linguisticPatch.forceRussianDetection(text);
         if (russianAnalysis.forceDetection) {
@@ -174,7 +184,12 @@ class LanguageDetector {
             
             // Controlla pattern di caratteri tipici di alcune lingue
             if (lang === 'it' && /[àèéìòù]/i.test(normalizedText)) {
-                scores[lang] += 10; // Aumentato - Accenti italiani
+                scores[lang] += 20; // Aumentato per dare priorità all'italiano con accenti
+            }
+            
+            // Give Italian a boost for common Italian words
+            if (lang === 'it' && (/\b(sono|gli|del|quali|quando|dove|come|perché|cosa)\b/i.test(normalizedText))) {
+                scores[lang] += 15; // Boost for common Italian words
             }
             if (lang === 'fr' && /[àâçéèêëîïôùûüÿ]/i.test(normalizedText)) {
                 scores[lang] += 10; // Aumentato - Accenti francesi
@@ -194,7 +209,7 @@ class LanguageDetector {
             if (lang === 'sv' && /[åäö]/i.test(normalizedText)) {
                 scores[lang] += 10; // Caratteri svedesi
             }
-            if (lang === 'nl' && /[\bvan\b|\bde\b|\bhet\b]/i.test(normalizedText)) {
+            if (lang === 'nl' && /\b(van|de|het)\b/i.test(normalizedText)) {
                 scores[lang] += 5; // Parole comuni olandesi
             }
             if (lang === 'tr' && /[çğıöşü]/i.test(normalizedText)) {

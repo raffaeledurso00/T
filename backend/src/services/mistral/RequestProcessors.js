@@ -167,6 +167,34 @@ class RequestProcessors {
         // Enrich history with context
         const enrichedHistory = [contextPrompt, ...history];
         
+        // Aggiungiamo un controllo specifico per le domande sugli orari del ristorante
+        const lowerMsg = message.toLowerCase();
+        if (lowerMsg === "quali sono gli orari del ristorante?" || 
+            lowerMsg.includes("orari del ristorante") || 
+            lowerMsg.includes("quando apre il ristorante") || 
+            (lowerMsg.includes("ristorante") && lowerMsg.includes("orari"))) {
+            
+            // For restaurant hours questions, override detected language to Italian
+            // to ensure consistent response formatting
+            if (detectedLanguage !== 'it') {
+                console.log(`[RequestProcessors] Restaurant hours question detected with language '${detectedLanguage}', forcing Italian`);
+                detectedLanguage = 'it';
+            }
+            
+            console.log(`[RequestProcessors] Detected direct restaurant hours question, adding specific instruction`);
+            
+            // Aggiungiamo un'istruzione specifica e diretta alla fine della conversazione
+            enrichedHistory.push({
+                role: 'system',
+                content: `IMPORTANTE: L'utente sta chiedendo informazioni sugli orari del ristorante. Questi sono gli orari CORRETTI da fornire:\n` +
+                         `- Il ristorante è aperto TUTTI I GIORNI\n` +
+                         `- Orari PRANZO: 12:30 - 14:30\n` + 
+                         `- Orari CENA: 19:30 - 22:30\n` +
+                         `- Per prenotazioni: telefono interno 122 o email ristorante@villapetriolo.com\n\n` +
+                         `DEVI includere ESATTAMENTE questi orari nella tua risposta. NON dire che non hai informazioni sugli orari.`
+            });
+        }
+        
         // Get response from API
         const response = await this.apiClient.callMistralAPI(
             enrichedHistory, 
@@ -224,37 +252,167 @@ class RequestProcessors {
      * @returns {string} - Topic-specific context
      */
     getTopicSpecificContext(topic) {
-        if (topic === 'menu') {
+        // Import JSON data
+        const restaurantData = require('../../data/ristorante.json');
+        const restaurantDataEn = require('../../data/restaurant.js');
+        const attivitaData = require('../../data/attivita.json');
+        const eventiData = require('../../data/eventi.json');
+        const serviziData = require('../../data/servizi.json');
+        
+        if (topic === 'menu' || topic === 'ristorante') {
+            // Get restaurant data
+            const orari = restaurantData?.orari || {};
+            const prenotazioni = restaurantData?.prenotazioni || {};
+            const menu = restaurantData?.menu || {};
+            
+            let menuItems = '';
+            if (menu.antipasti && menu.antipasti.length > 0) {
+                const antipasti = menu.antipasti.map(item => `${item.nome} (€${item.prezzo})`).join(', ');
+                menuItems += `- Antipasti: ${antipasti}\n`;
+            }
+            
+            if (menu.primi && menu.primi.length > 0) {
+                const primi = menu.primi.map(item => `${item.nome} (€${item.prezzo})`).join(', ');
+                menuItems += `- Primi: ${primi}\n`;
+            }
+            
+            if (menu.secondi && menu.secondi.length > 0) {
+                const secondi = menu.secondi.map(item => `${item.nome} (€${item.prezzo})`).join(', ');
+                menuItems += `- Secondi: ${secondi}\n`;
+            }
+            
+            if (menu.dolci && menu.dolci.length > 0) {
+                const dolci = menu.dolci.map(item => `${item.nome} (€${item.prezzo})`).join(', ');
+                menuItems += `- Dolci: ${dolci}\n`;
+            }
+            
             return `INFORMAZIONI SUL RISTORANTE:\n` +
-                   `- Orari pranzo: 12:30 - 14:30\n` +
-                   `- Orari cena: 19:30 - 22:30\n` +
-                   `- Aperto tutti i giorni\n\n` +
+                   `- Orari pranzo: ${orari.pranzo || '12:30 - 14:30'}\n` +
+                   `- Orari cena: ${orari.cena || '19:30 - 22:30'}\n` +
+                   `- Aperto ${orari.giorni_apertura || 'tutti i giorni'}\n` +
+                   `- Prenotazioni: ${prenotazioni.telefono || 'interno 122'} o ${prenotazioni.email || 'ristorante@villapetriolo.com'}\n\n` +
                    `MENU DISPONIBILE:\n` +
-                   `- Antipasti: Carpaccio di manzo (€16), Burrata con pomodorini (€14), Tagliere di salumi (€18)\n` +
-                   `- Primi: Pappardelle al ragù di cinghiale (€18), Risotto ai funghi porcini (€16)\n` +
-                   `- Secondi: Bistecca alla fiorentina (€70 per 2), Filetto di branzino (€24)\n` +
-                   `- Dolci: Tiramisù (€8), Panna cotta (€8), Cantucci e Vin Santo (€10)\n\n`;
+                   menuItems + '\n';
         } else if (topic === 'attivita') {
-            return `ATTIVITÀ DISPONIBILI:\n` +
-                   `- Nella struttura: Degustazione vini (17:00, €35), Corso di cucina (lun/mer/ven 10:00, €65)\n` +
-                   `- Passeggiata guidata nel bosco (mar/gio 9:30, €20), Yoga nel parco (ogni giorno 8:00, €15)\n` +
-                   `- Nei dintorni: Tour del Chianti (mezza giornata, €85), Visita a San Gimignano (€60)\n\n`;
+            // Get activities data
+            const attivitaStruttura = attivitaData?.nella_struttura || [];
+            const attivitaDintorni = attivitaData?.nei_dintorni || [];
+            
+            let attivitaInfo = `ATTIVITÀ DISPONIBILI:\n`;
+            
+            // Add activities in the structure
+            if (attivitaStruttura.length > 0) {
+                const attivitaList = attivitaStruttura.map(att => {
+                    return `${att.nome} (${att.orari}, €${att.prezzo})`;
+                }).join(', ');
+                attivitaInfo += `- Nella struttura: ${attivitaList}\n`;
+            }
+            
+            // Add activities in the surroundings
+            if (attivitaDintorni.length > 0) {
+                const dintorniList = attivitaDintorni.map(att => {
+                    return `${att.nome} (${att.distanza}, €${att.prezzo})`;
+                }).join(', ');
+                attivitaInfo += `- Nei dintorni: ${dintorniList}\n`;
+            }
+            
+            return attivitaInfo + '\n';
         } else if (topic === 'eventi') {
-            return `EVENTI IN PROGRAMMA:\n` +
-                   `- Settimanali: Degustazione olio (martedì, 19:00, €25), Concerto dal vivo (venerdì, 21:00, €15)\n` +
-                   `- Aperitivo al tramonto (ogni giorno, 18:30, €20)\n` +
-                   `- Speciali: Festival del Vino (primo weekend del mese, €75), Cooking Masterclass (ultimo sabato, €120)\n\n`;
+            // Get events data
+            const eventi = eventiData?.eventi || [];
+            const eventiSpeciali = eventiData?.eventi_speciali || [];
+            
+            let eventiInfo = `EVENTI IN PROGRAMMA:\n`;
+            
+            // Add regular events
+            if (eventi.length > 0) {
+                const eventiRegolari = eventi.map(evt => {
+                    return `${evt.nome} (${evt.data}, ${evt.orario}, €${evt.prezzo})`;
+                }).join(', ');
+                eventiInfo += `- Settimanali: ${eventiRegolari}\n`;
+            }
+            
+            // Add special events
+            if (eventiSpeciali.length > 0) {
+                const specialiList = eventiSpeciali.map(evt => {
+                    return `${evt.nome} (${evt.data}, €${evt.prezzo})`;
+                }).join(', ');
+                eventiInfo += `- Speciali: ${specialiList}\n`;
+            }
+            
+            return eventiInfo + '\n';
         } else if (topic === 'servizi') {
-            return `SERVIZI DISPONIBILI:\n` +
-                   `- Servizi base: Reception (24h), Servizio in camera (7:00-23:00), Wi-Fi gratuito, Parcheggio\n` +
-                   `- Benessere: Spa (10:00-20:00), Massaggi (da €60), Piscina esterna (8:00-19:00, mag-set)\n` +
-                   `- Extra: Trasferimento aeroporto (da €80), Noleggio biciclette (€15/ora), Servizio lavanderia\n\n`;
+            // Get services data
+            const serviziHotel = serviziData?.servizi_hotel || [];
+            const serviziBenessere = serviziData?.servizi_benessere || [];
+            const serviziExtra = serviziData?.servizi_extra || [];
+            
+            let serviziInfo = `SERVIZI DISPONIBILI:\n`;
+            
+            // Add hotel services
+            if (serviziHotel.length > 0) {
+                const hotelList = serviziHotel.map(srv => {
+                    return `${srv.nome} (${srv.orari})`;
+                }).join(', ');
+                serviziInfo += `- Servizi base: ${hotelList}\n`;
+            }
+            
+            // Add wellness services
+            if (serviziBenessere.length > 0) {
+                const benessereLista = serviziBenessere.map(srv => {
+                    let priceInfo = srv.prezzo ? ` (${srv.prezzo})` : '';
+                    return `${srv.nome}${priceInfo}`;
+                }).join(', ');
+                serviziInfo += `- Benessere: ${benessereLista}\n`;
+            }
+            
+            // Add extra services
+            if (serviziExtra.length > 0) {
+                const extraList = serviziExtra.map(srv => {
+                    let priceInfo = srv.prezzo ? ` (${srv.prezzo})` : '';
+                    return `${srv.nome}${priceInfo}`;
+                }).join(', ');
+                serviziInfo += `- Extra: ${extraList}\n`;
+            }
+            
+            return serviziInfo + '\n';
         } else {
-            // Generic context with basic information
-            return `INFORMAZIONI GENERALI:\n` +
-                   `- Ristorante: Pranzo 12:30-14:30, Cena 19:30-22:30, tutti i giorni\n` +
-                   `- Attività principali: Degustazione vini (€35), Corso di cucina (€65), Yoga (€15)\n` +
-                   `- Servizi: Wi-Fi gratuito, Reception 24h, Spa e centro benessere (10:00-20:00)\n\n`;
+            // Generic context with basic information from JSON data
+            // Get basic info from each data source
+            const orari = restaurantData?.orari || {};
+            const attivitaStruttura = attivitaData?.nella_struttura || [];
+            const serviziHotel = serviziData?.servizi_hotel || [];
+            
+            let generalInfo = `INFORMAZIONI GENERALI:\n`;
+            
+            // Restaurant info
+            generalInfo += `- Ristorante: Pranzo ${orari.pranzo || '12:30-14:30'}, Cena ${orari.cena || '19:30-22:30'}, ${orari.giorni_apertura || 'tutti i giorni'}\n`;
+            
+            // Activities info
+            if (attivitaStruttura.length > 0) {
+                const attivitaList = attivitaStruttura.slice(0, 3).map(att => {
+                    return `${att.nome} (€${att.prezzo})`;
+                }).join(', ');
+                generalInfo += `- Attività principali: ${attivitaList}\n`;
+            }
+            
+            // Services info
+            const serviziBasic = ['Wi-Fi', 'Reception', 'Spa e centro benessere'];
+            const filtratiServizi = serviziHotel.filter(srv => {
+                return serviziBasic.some(basic => srv.nome.includes(basic));
+            });
+            
+            if (filtratiServizi.length > 0) {
+                const serviziList = filtratiServizi.map(srv => {
+                    if (srv.orari) {
+                        return `${srv.nome} (${srv.orari})`;
+                    }
+                    return srv.nome;
+                }).join(', ');
+                generalInfo += `- Servizi: ${serviziList}\n`;
+            }
+            
+            return generalInfo + '\n';
         }
         
         // Add an important note to ensure accurate responses
