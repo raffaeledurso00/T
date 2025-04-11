@@ -48,19 +48,52 @@ class MessageDetectionUtils {
     // Verifica se il messaggio è relativo al menu/ristorante
     isAboutMenu(message) {
         const menuKeywords = ['menu', 'ristorante', 'mangiare', 'cena', 'pranzo', 'colazione', 'piatti', 'cucina'];
-        return menuKeywords.some(keyword => message.includes(keyword));
+        
+        // Chinese keywords for restaurant
+        const chineseMenuKeywords = ['菜单', '餐厅', '餐馆', '吃饭', '晚餐', '午餐', '早餐', '菜', '饭', '厨师', '食物', '营业时间'];
+        
+        // Russian keywords for restaurant
+        const russianMenuKeywords = ['меню', 'ресторан', 'ужин', 'обед', 'завтрак', 'питание', 'еда', 'кухня'];
+        
+        // Japanese keywords for restaurant
+        const japaneseMenuKeywords = ['メニュー', 'レストラン', '食事', '夕食', '昼食', '朝食', '料理'];
+        
+        const allKeywords = [...menuKeywords, ...chineseMenuKeywords, ...russianMenuKeywords, ...japaneseMenuKeywords];
+        return allKeywords.some(keyword => message.includes(keyword));
     }
     
     // Verifica se il messaggio è relativo ad attività
     isAboutActivities(message) {
         const activityKeywords = ['attività', 'fare', 'escursion', 'visita', 'tour', 'passeggiata'];
-        return activityKeywords.some(keyword => message.includes(keyword));
+        
+        // Chinese keywords for activities
+        const chineseActivityKeywords = ['活动', '做什么', '旅游', '观光', '参观', '游览', '散步', '健身'];
+        
+        // Russian keywords for activities
+        const russianActivityKeywords = ['занятие', 'активность', 'экскурсия', 'посещение', 'тур', 'прогулка'];
+        
+        // Japanese keywords for activities
+        const japaneseActivityKeywords = ['アクティビティ', '活動', '遊ぶ', '旅行', '観光', 'ツアー', '散歩'];
+        
+        const allKeywords = [...activityKeywords, ...chineseActivityKeywords, ...russianActivityKeywords, ...japaneseActivityKeywords];
+        return allKeywords.some(keyword => message.includes(keyword));
     }
     
     // Verifica se il messaggio è relativo ad eventi
     isAboutEvents(message) {
         const eventKeywords = ['eventi', 'spettacol', 'concerto', 'programma', 'festival', 'manifestazioni'];
-        return eventKeywords.some(keyword => message.includes(keyword));
+        
+        // Chinese keywords for events
+        const chineseEventKeywords = ['活动', '演出', '音乐会', '表演', '项目', '节目表', '度假康乐', '节日', '周末', '娱乐'];
+        
+        // Russian keywords for events
+        const russianEventKeywords = ['события', 'мероприятия', 'спектакль', 'концерт', 'программа', 'фестиваль'];
+        
+        // Japanese keywords for events
+        const japaneseEventKeywords = ['イベント', '行事', '公演', 'コンサート', 'プログラム', 'フェスティバル'];
+        
+        const allKeywords = [...eventKeywords, ...chineseEventKeywords, ...russianEventKeywords, ...japaneseEventKeywords];
+        return allKeywords.some(keyword => message.includes(keyword));
     }
     
     // Verifica se il messaggio è relativo a prenotazioni ristorante

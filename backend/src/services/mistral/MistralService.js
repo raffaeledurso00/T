@@ -63,144 +63,27 @@ class MistralService {
         try {
             console.log(`Processing message for session ${sessionId}: "${message}"`);
             
-            // Special case for the restaurant hours question that caused issues
-            let detectedLanguage;
-            if (message.toLowerCase().trim() === "quali sono gli orari del ristorante?") {
-                console.log(`[MistralService] Exact match for restaurant hours question, forcing Italian language`);
-                detectedLanguage = 'it';
-            } else {
-                // Normal language detection for other messages
-                detectedLanguage = this.languageProcessing.detectLanguage(message);
-            }
+            // Detect language
+            const detectedLanguage = this.languageProcessing.detectLanguage(message);
+            console.log(`Detected language: ${detectedLanguage}`);
             
-            // Check for various request types and route accordingly
+            // TUTTO DEVE ESSERE GESTITO DALL'AI - NESSUN FALLBACK
+            // Invia la richiesta direttamente all'AI senza intercettazioni
+            const response = await this.requestProcessors.processMistralAIRequest(message, sessionId, detectedLanguage);
             
-            // 0. Check if it's a simple greeting for a minimal response
-            if (this.languageProcessing.isSimpleGreeting(message)) {
-                return await this.requestProcessors.handleSimpleGreeting(message, sessionId, detectedLanguage);
-            }
-            
-            // 1. Check if it's a request for restaurant information
-            if (this.restaurantHandler.isRestaurantInfoRequest(message)) {
-                console.log(`[MistralService] Detected restaurant info request`);
-                const restaurantResponse = this.restaurantHandler.handleRestaurantRequest(message);
-                
-                // Save to conversation history
-                const history = await this.conversationManager.getConversationHistory(sessionId);
-                history.push({ role: 'user', content: message });
-                history.push({ role: 'assistant', content: restaurantResponse });
-                await this.conversationManager.updateConversationHistory(sessionId, history);
-                
-                // Force Italian for restaurant responses regardless of detected language
-                // This ensures consistent response formatting
-                const responseLanguage = message.toLowerCase().includes('ristorante') ? 'it' : detectedLanguage;
-                
-                console.log(`[MistralService] Using language '${responseLanguage}' for restaurant response`);
-                
-                return {
-                    message: restaurantResponse,
-                    sessionId: sessionId,
-                    source: 'restaurant-info',
-                    language: responseLanguage
-                };
-            }
-            
-            // 2. Check if it's a request for activities
-            if (this.activitiesHandler.isActivitiesInfoRequest(message)) {
-                console.log(`[MistralService] Detected activities info request`);
-                const activitiesResponse = this.activitiesHandler.handleActivitiesRequest(message);
-                
-                // Save to conversation history
-                const history = await this.conversationManager.getConversationHistory(sessionId);
-                history.push({ role: 'user', content: message });
-                history.push({ role: 'assistant', content: activitiesResponse });
-                await this.conversationManager.updateConversationHistory(sessionId, history);
-                
-                return {
-                    message: activitiesResponse,
-                    sessionId: sessionId,
-                    source: 'activities-info',
-                    language: detectedLanguage
-                };
-            }
-            
-            // 3. Check if it's a request for events
-            if (this.eventsHandler.isEventsInfoRequest(message)) {
-                console.log(`[MistralService] Detected events info request`);
-                const eventsResponse = this.eventsHandler.handleEventsRequest(message);
-                
-                // Save to conversation history
-                const history = await this.conversationManager.getConversationHistory(sessionId);
-                history.push({ role: 'user', content: message });
-                history.push({ role: 'assistant', content: eventsResponse });
-                await this.conversationManager.updateConversationHistory(sessionId, history);
-                
-                return {
-                    message: eventsResponse,
-                    sessionId: sessionId,
-                    source: 'events-info',
-                    language: detectedLanguage
-                };
-            }
-            
-            // 4. Check if it's a request for services
-            if (this.servicesHandler.isServicesInfoRequest(message)) {
-                console.log(`[MistralService] Detected services info request`);
-                const servicesResponse = this.servicesHandler.handleServicesRequest(message);
-                
-                // Save to conversation history
-                const history = await this.conversationManager.getConversationHistory(sessionId);
-                history.push({ role: 'user', content: message });
-                history.push({ role: 'assistant', content: servicesResponse });
-                await this.conversationManager.updateConversationHistory(sessionId, history);
-                
-                return {
-                    message: servicesResponse,
-                    sessionId: sessionId,
-                    source: 'services-info',
-                    language: detectedLanguage
-                };
-            }
-            
-            // QUICK SOLUTION FOR RUSSIAN: If the language is Russian, ignore Mistral and use a predefined response
-            if (detectedLanguage === 'ru' && this.languageProcessing.isRussian(message)) {
-                return await this.requestProcessors.handleRussianMessage(message, sessionId);
-            }
-            
-            // Handle restaurant booking requests
-            if (this.restaurantHandler.isRestaurantBookingRequest(message)) {
-                const restaurantResponse = this.restaurantHandler.handleRestaurantRequest(message);
-                
-                // Save to conversation history
-                const history = await this.conversationManager.getConversationHistory(sessionId);
-                history.push({ role: 'user', content: message });
-                history.push({ role: 'assistant', content: restaurantResponse });
-                await this.conversationManager.updateConversationHistory(sessionId, history);
-                
-                return {
-                    message: restaurantResponse,
-                    sessionId: sessionId,
-                    source: 'restaurant-system',
-                    language: detectedLanguage
-                };
-            }
-            
-            // Check if the message is booking-related
-            if (this.bookingIntegration.isBookingRelatedQuery(message) && userId) {
-                const result = await this.requestProcessors.handleBookingQuery(message, sessionId, userId, detectedLanguage);
-                if (result) {
-                    return result;
-                }
-            }
-            
-            // If it's not a booking query or we didn't get a response,
-            // proceed with the normal Mistral flow
-            return await this.requestProcessors.processMistralAIRequest(message, sessionId, detectedLanguage);
+            return response;
             
         } catch (error) {
             console.error('Error processing message:', error);
             
-            return this.requestProcessors.getErrorResponse(sessionId, detectedLanguage);
+            // Fallback solo in caso di errore
+            return {
+                message: "Si è verificato un errore di sistema. Riprova tra qualche istante.",
+                sessionId: sessionId,
+                error: true,
+                source: 'error-handler',
+                language: 'it'
+            };
         }
     }
 

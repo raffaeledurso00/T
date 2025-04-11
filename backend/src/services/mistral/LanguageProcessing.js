@@ -51,7 +51,15 @@ class LanguageProcessing {
      * @returns {boolean} - True if it's a simple greeting
      */
     isSimpleGreeting(message) {
-        return message.toLowerCase().trim().match(/^(ciao|salve|buongiorno|buonasera|hi|hello|hey)$/);
+        const lowerMsg = message.toLowerCase().trim();
+        
+        // Only treat very basic Chinese greetings as simple greetings
+        // '你好' (hello) and '嗨' (hi) are common Chinese greetings
+        if (lowerMsg === '你好' || lowerMsg === '嗨' || lowerMsg === '您好') {
+            return true;
+        }
+        
+        return lowerMsg.match(/^(ciao|salve|buongiorno|buonasera|hi|hello|hey)$/);
     }
 
     /**

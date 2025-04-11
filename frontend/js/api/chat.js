@@ -1,8 +1,4 @@
-        // Controlla se la risposta contiene un errore
-        if (data.error) {
-            console.warn('Server returned an error:', data.error);
-            throw new Error(`Server error: ${data.error} - ${data.message || 'No additional details'}`);
-        }// frontend/js/api/chat.js
+// frontend/js/api/chat.js
 // API for interacting with the chat backend
 
 const ChatAPI = {

@@ -293,9 +293,11 @@ class LanguageDetector {
         };
         
         for (const [lang, words] of Object.entries(greetings)) {
-            if (words.some(word => text === word || text.startsWith(word + ' ') || text.includes(word))) {
-                console.log('[LanguageDetector] Testo breve, parola chiave trovata:', word, 'lingua:', lang);
-                return lang;
+            for (const keyword of words) {
+                if (text === keyword || text.startsWith(keyword + ' ') || text.includes(keyword)) {
+                    console.log('[LanguageDetector] Testo breve, parola chiave trovata:', keyword, 'lingua:', lang);
+                    return lang;
+                }
             }
         }
         
